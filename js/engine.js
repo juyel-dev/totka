@@ -8,8 +8,9 @@ const TOTKA_ENGINE = (() => {
 
   // ── GLOBAL CONFIGURATION ────────────────────────────────────
   // These MUST match the Python reference exactly — never change
-  const POOL         = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789০১২৩৪৫৬৭৮৯!#$%&*+-./:;<=>?@^_`{|}~₹";
-  const START_UNICODE = 0xE000;  // Unicode Private Use Area start
+  const POOL         = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789০১২৩৪৫৬৭৮৯কখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহঅআইঈউঊঋএঐওঔ
+    ";
+  const START_UNICODE = 0x4E00;  // Unicode Private Use Area start
   const CHUNK_BITS    = 18;
   const MASK          = (1 << CHUNK_BITS) - 1; // = 262143 = 0x3FFFF
   const POOL_LEN      = POOL.length;            // = 86
