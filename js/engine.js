@@ -282,8 +282,8 @@ const TOTKA_WORKER = {
         "https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"
       );
 
-      const POOL          = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789০১২৩৪৫৬৭৮৯!#$%&*+-./:;<=>?@^_\`{|}~₹";
-      const START_UNICODE = 0xE000;
+      const POOL          = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789০১২৩৪৫৬৭৮৯কখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহঅআইঈউঊঋএঐওঔ";
+      const START_UNICODE = 0x4E00;
       const CHUNK_BITS    = 18;
       const MASK          = (1 << CHUNK_BITS) - 1;
       const POOL_LEN      = POOL.length;
