@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile — TOTKA</title>
+  <meta name="description" content="Your TOTKA profile — view and manage your uploaded files."/>
+  <meta name="theme-color" content="#0d1117"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/app.css"/>
+
+  <style>
+    /* ── PAGE-SPECIFIC ───────────────────────────────────── */
+
+    /* Edit panel */
+    .edit-panel {
+      background:    var(--glass-bg);
+      border:        1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding:       var(--space-lg);
+      margin-bottom: var(--space-md);
+      animation:     slideDown 0.25s ease;
+    }
+    .edit-panel-title {
+      font-family:   var(--font-heading);
+      font-size:     0.9rem;
+      color:         var(--accent-blue);
+      margin-bottom: var(--space-md);
+      padding-bottom:8px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .edit-section-label {
+      font-size:     10px;
+      text-transform:uppercase;
+      letter-spacing:1.5px;
+      color:         var(--accent-blue);
+      margin:        var(--space-md) 0 var(--space-sm);
+      padding-bottom:5px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    /* Profile pic edit row */
+    .pic-edit-row {
+      display:     flex;
+      align-items: center;
+      gap:         var(--space-md);
+      margin-bottom:var(--space-md);
+    }
+    #edit-pic-preview {
+      width:         64px;
+      height:        64px;
+      border-radius: 50%;
+      object-fit:    cover;
+      border:        2px solid var(--glass-border);
+      background:    var(--bg-tertiary);
+    }
+    #edit-pic-status {
+      font-size:  11px;
+      display:    block;
+      margin-top: 4px;
+    }
+    #edit-pic-input { display:none; }
+
+    /* Bio counter */
+    .bio-wrap       { position:relative; }
+    .bio-wrap textarea { padding-bottom:22px; }
+    #bio-count {
+      position: absolute;
+      right: 10px; bottom: 10px;
+      font-size: 10px;
+      color: var(--text-muted);
+      pointer-events:none;
+    }
+
+    /* Social fields grid */
+    .social-grid {
+      display:               grid;
+      grid-template-columns: auto 1fr;
+      align-items:           center;
+      gap:                   8px var(--space-sm);
+      margin-bottom:         var(--space-md);
+    }
+    .social-grid-label {
+      font-size:  12px;
+      color:      var(--text-muted);
+      white-space:nowrap;
+    }
+
+    /* Sheet link section */
+    .sheet-link-box {
+      background:    rgba(88,166,255,0.04);
+      border:        1px solid rgba(88,166,255,0.15);
+      border-radius: var(--radius-sm);
+      padding:       var(--space-md);
+      margin-bottom: var(--space-md);
+    }
+    .sheet-link-title {
+      font-size:   12px;
+      font-weight: 700;
+      color:       var(--text-primary);
+      margin-bottom:6px;
+    }
+    .sheet-link-hint {
+      font-size:     11px;
+      color:         var(--text-muted);
+      margin-bottom: var(--space-sm);
+      line-height:   1.6;
+    }
+    .sheet-link-hint a {
+      color: var(--accent-blue);
+    }
+
+    /* Edit panel action row */
+    .edit-action-row {
+      display:  flex;
+      gap:      var(--space-sm);
+      margin-top:var(--space-md);
+    }
+
+    /* Posts section header */
+    .posts-section-header {
+      display:         flex;
+      align-items:     center;
+      justify-content: space-between;
+      margin-bottom:   var(--space-md);
+      padding-bottom:  var(--space-sm);
+      border-bottom:   1px solid var(--glass-border);
+    }
+    .posts-section-title {
+      font-family:   var(--font-heading);
+      font-size:     0.85rem;
+      color:         var(--text-primary);
+    }
+
+    /* Tabs: My Posts / About */
+    .profile-tabs {
+      display:       flex;
+      gap:           0;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: var(--space-md);
+    }
+    .profile-tab {
+      flex:          1;
+      padding:       10px;
+      background:    none;
+      border:        none;
+      color:         var(--text-muted);
+      font-family:   var(--font-body);
+      font-size:     12px;
+      cursor:        pointer;
+      transition:    var(--transition);
+      border-bottom: 2px solid transparent;
+      text-align:    center;
+    }
+    .profile-tab:hover { color:var(--text-primary); }
+    .profile-tab--active {
+      color:        var(--accent-blue);
+      border-bottom-color:var(--accent-blue);
+      font-weight:  700;
+    }
+
+    /* Tab panels */
+    .tab-panel { animation:fadeIn 0.2s ease; }
+
+    /* Responsive grid for result cards */
+    @media (max-width:480px) {
+      .social-grid { grid-template-columns: 1fr; }
+      .social-grid-label { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ TOP NAV ══════════════ -->
+<nav class="top-nav">
+  <a href="index.html" class="top-nav__logo">TOTKA</a>
+  <div style="flex:1"></div>
+  <div class="top-nav__actions">
+    <a href="encode.html" class="nav-icon-btn" title="Upload">⬆️</a>
+    <a href="index.html"  class="nav-icon-btn" title="Feed">🏠</a>
+    <a href="profile.html" class="nav-avatar" id="nav-profile-link" title="Profile">?</a>
+  </div>
+</nav>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="page-container">
+
+  <!-- Profile header (skeleton → real content) -->
+  <div id="profile-header-wrap"></div>
+
+  <!-- ══════════ EDIT PANEL (own profile only) ══════════ -->
+  <div class="edit-panel hidden" id="edit-panel">
+    <div class="edit-panel-title">✏️ Edit Profile</div>
+
+    <!-- Pic input (hidden — triggered by avatar click) -->
+    <input type="file" id="edit-pic-input" accept="image/*"/>
+
+    <!-- Pic preview row -->
+    <div class="pic-edit-row">
+      <img id="edit-pic-preview"
+        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0Ij48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIzMiIgZmlsbD0iIzIxMjYyZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzhiOTQ5ZSIgZm9udC1zaXplPSIyNiIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSI+PzwvdGV4dD48L3N2Zz4="
+        alt="Profile picture"/>
+      <div>
+        <label for="edit-pic-input" class="btn btn--ghost btn--sm" style="cursor:pointer">
+          📷 Change Photo
+        </label>
+        <span id="edit-pic-status" style="color:var(--text-muted)">
+          Max 50KB · auto-compressed
+        </span>
+      </div>
+    </div>
+
+    <!-- Basic info -->
+    <div class="edit-section-label">Basic Info</div>
+
+    <div class="form-group">
+      <label class="form-label" for="edit-name">Display Name <span>*</span></label>
+      <input class="form-input" type="text" id="edit-name"
+        placeholder="Your name" maxlength="50"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="edit-profession">Profession</label>
+      <input class="form-input" type="text" id="edit-profession"
+        placeholder="Developer, Designer, Student..." maxlength="60"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="edit-bio">
+        Bio
+        <span style="font-weight:400;text-transform:none;font-size:10px;margin-left:4px">
+          (<span id="bio-count">0/150</span>)
+        </span>
+      </label>
+      <div class="bio-wrap">
+        <textarea class="form-input" id="edit-bio" rows="3"
+          placeholder="Tell the world about yourself..." maxlength="150"></textarea>
+        <span id="bio-count" style="display:none"></span>
+      </div>
+    </div>
+
+    <!-- Social links -->
+    <div class="edit-section-label">Social Links</div>
+    <div class="social-grid">
+      <span class="social-grid-label">🐦 Twitter</span>
+      <input class="form-input" type="url" id="edit-twitter"
+        placeholder="https://twitter.com/username"/>
+
+      <span class="social-grid-label">📸 Instagram</span>
+      <input class="form-input" type="url" id="edit-ig"
+        placeholder="https://instagram.com/username"/>
+
+      <span class="social-grid-label">📘 Facebook</span>
+      <input class="form-input" type="url" id="edit-fb"
+        placeholder="https://facebook.com/username"/>
+
+      <span class="social-grid-label">💻 GitHub</span>
+      <input class="form-input" type="url" id="edit-gh"
+        placeholder="https://github.com/username"/>
+    </div>
+
+    <!-- Personal Sheet Linking -->
+    <div class="edit-section-label">Personal Storage Sheet (optional)</div>
+    <div class="sheet-link-box">
+      <div class="sheet-link-title">🗂️ Link Your Own Google Sheet</div>
+      <p class="sheet-link-hint">
+        Link your own Google Spreadsheet to keep a personal copy of your posts.
+        <a href="https://docs.google.com/spreadsheets/create" target="_blank">
+          Create a new sheet →
+        </a><br>
+        The sheet must be shared with the GAS service account email.
+      </p>
+      <div class="form-group">
+        <label class="form-label" for="edit-sheet-id">Spreadsheet ID</label>
+        <input class="form-input" type="text" id="edit-sheet-id"
+          placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+          autocomplete="off" spellcheck="false"/>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px">
+          Found in the Google Sheets URL between /d/ and /edit
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="edit-sheet-name">Tab Name</label>
+        <input class="form-input" type="text" id="edit-sheet-name"
+          placeholder="My Posts" autocomplete="off"/>
+      </div>
+      <button class="btn btn--ghost btn--sm btn--full" id="link-sheet-btn">
+        🔗 Link Sheet
+      </button>
+    </div>
+
+    <!-- Save / Cancel -->
+    <div class="edit-action-row">
+      <button class="btn btn--ghost" id="edit-cancel-btn" style="flex:0 0 auto">
+        Cancel
+      </button>
+      <button class="btn btn--primary btn--full" id="edit-save-btn">
+        ✅ Save Changes
+      </button>
+    </div>
+  </div>
+  <!-- end edit-panel -->
+
+
+  <!-- ══════════ POSTS + ABOUT TABS ══════════ -->
+  <div class="profile-tabs" id="profile-tabs">
+    <button class="profile-tab profile-tab--active" data-tab="posts">
+      📁 Posts
+    </button>
+    <button class="profile-tab" data-tab="about">
+      ℹ️ About
+    </button>
+  </div>
+
+  <!-- Posts tab -->
+  <div class="tab-panel" id="tab-posts">
+    <div id="user-posts-wrap"></div>
+  </div>
+
+  <!-- About tab -->
+  <div class="tab-panel hidden" id="tab-about">
+    <div class="glass-card" style="padding:var(--space-md)">
+      <p style="font-size:13px;color:var(--text-muted);text-align:center;padding:var(--space-lg) 0">
+        Account details visible after login.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════ BOTTOM NAV ══════════════ -->
+<nav class="bottom-nav">
+  <a href="index.html"   class="nav-item">
+    <span class="nav-item__icon">🏠</span>
+    <span class="nav-item__label">Home</span>
+  </a>
+  <a href="encode.html"  class="nav-item">
+    <span class="nav-item__icon">⬆️</span>
+    <span class="nav-item__label">Encode</span>
+  </a>
+  <a href="decode.html"  class="nav-item">
+    <span class="nav-item__icon">⬇️</span>
+    <span class="nav-item__label">Decode</span>
+  </a>
+  <a href="profile.html" class="nav-item nav-item--active">
+    <span class="nav-item__icon">👤</span>
+    <span class="nav-item__label">Profile</span>
+  </a>
+</nav>
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/image.js"></script>
+<script src="js/profile.js"></script>
+
+<script>
+// ── Tab switching ──────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  const tabs   = document.querySelectorAll(".profile-tab");
+  const panels = document.querySelectorAll(".tab-panel");
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.tab;
+
+      tabs.forEach(t   => t.classList.remove("profile-tab--active"));
+      panels.forEach(p => p.classList.add("hidden"));
+
+      tab.classList.add("profile-tab--active");
+      document.getElementById(`tab-${target}`)?.classList.remove("hidden");
+    });
+  });
+
+  // Populate About tab with session data if own profile
+  const aboutPanel = document.getElementById("tab-about");
+  if (aboutPanel && SESSION.isLoggedIn()) {
+    aboutPanel.innerHTML = `
+      <div class="glass-card" style="padding:var(--space-md)">
+        <div class="section-title" style="margin-bottom:var(--space-md)">Account Info</div>
+        ${[
+          ["User ID",    SESSION.getUserId()   || "—"],
+          ["Username",   "@" + (SESSION.getUsername() || "—")],
+          ["Name",       SESSION.getName()     || "—"],
+          ["Sheet ID",   SESSION.getSheetId()  || "Not linked"],
+          ["Sheet Tab",  SESSION.getSheetName()|| "—"],
+        ].map(([label, val]) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;
+            padding:8px 0;border-bottom:1px solid var(--glass-border);gap:8px">
+            <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;
+              letter-spacing:.5px;white-space:nowrap">${label}</span>
+            <span class="code-inline" style="font-size:12px;text-align:right;word-break:break-all">
+              ${val}
+            </span>
+          </div>
+        `).join("")}
+        <div style="margin-top:var(--space-md)">
+          <a href="login.html" class="btn btn--ghost btn--sm btn--full"
+            style="color:var(--accent-red-br)"
+            onclick="SESSION.clear();return true;">
+            🚪 Logout
+          </a>
+        </div>
+      </div>`;
+  }
+});
+</script>
+
+</body>
+</html>

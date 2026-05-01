@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Privacy Policy — TOTKA</title>
+  <meta name="description" content="TOTKA Privacy Policy — how we handle your data."/>
+  <meta name="theme-color" content="#0d1117"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/app.css"/>
+
+  <style>
+    .legal-header {
+      padding:       var(--space-lg) 0 var(--space-md);
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: var(--space-lg);
+    }
+    .legal-header h1 { font-size:1.3rem; margin-bottom:4px; }
+    .legal-date      { font-size:11px; color:var(--text-muted); }
+
+    .legal-section   { margin-bottom:var(--space-lg); }
+    .legal-section h2 {
+      font-family:   var(--font-body);
+      font-size:     14px;
+      font-weight:   700;
+      color:         var(--accent-blue);
+      margin-bottom: var(--space-sm);
+      padding-left:  10px;
+      border-left:   3px solid var(--accent-blue);
+    }
+    .legal-section p {
+      font-size:  13px;
+      line-height:1.8;
+      color:      var(--text-secondary);
+      margin-bottom:var(--space-sm);
+    }
+    .legal-section ul {
+      list-style:    none;
+      padding:       0;
+      margin-bottom: var(--space-sm);
+    }
+    .legal-section ul li {
+      font-size:   13px;
+      color:       var(--text-secondary);
+      line-height: 1.8;
+      padding-left:16px;
+      position:    relative;
+    }
+    .legal-section ul li::before {
+      content:   "·";
+      position:  absolute;
+      left:      4px;
+      color:     var(--accent-blue);
+    }
+    .legal-highlight {
+      background:    rgba(88,166,255,0.06);
+      border:        1px solid rgba(88,166,255,0.15);
+      border-radius: var(--radius-sm);
+      padding:       12px 16px;
+      font-size:     13px;
+      color:         var(--text-secondary);
+      line-height:   1.8;
+      margin-bottom: var(--space-sm);
+    }
+    .contact-box {
+      background:    var(--bg-tertiary);
+      border:        1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding:       var(--space-md);
+      text-align:    center;
+      margin-top:    var(--space-xl);
+    }
+    .contact-box p { font-size:13px; color:var(--text-muted); }
+    .contact-box a { color:var(--accent-blue); }
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="index.html" class="top-nav__logo">TOTKA</a>
+  <div style="flex:1"></div>
+  <a href="index.html" class="nav-icon-btn" title="Home">🏠</a>
+</nav>
+
+<main class="page-container">
+
+  <div class="legal-header">
+    <h1>🔒 Privacy Policy</h1>
+    <p class="legal-date">Last updated: January 2026</p>
+  </div>
+
+  <div class="legal-highlight">
+    <strong>Short version:</strong> We store only what you give us (username, bio, encoded file text).
+    Your files are never uploaded to our servers — they are encoded entirely in your browser.
+    We don't sell your data. We don't run ads. We don't track you.
+  </div>
+
+  <div class="legal-section">
+    <h2>1. Information We Collect</h2>
+    <p>When you create an account, we collect:</p>
+    <ul>
+      <li>Display name and username</li>
+      <li>Email address or phone number (used as login ID)</li>
+      <li>Password (stored as a SHA-256 hash — never in plain text)</li>
+      <li>Optional: bio, profession, profile picture, social media links</li>
+    </ul>
+    <p>When you upload a file, we store:</p>
+    <ul>
+      <li>The <strong>encoded text representation</strong> of your file (not the raw file)</li>
+      <li>Post title, description, tags, and alt text you provide</li>
+      <li>Original file size (as a human-readable string, e.g. "2.4 MB")</li>
+      <li>Timestamp of upload</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <h2>2. How Your Files Are Handled</h2>
+    <p>
+      Your files are <strong>never uploaded to any TOTKA server</strong>. All encoding
+      happens locally in your browser using JavaScript. Only the resulting text string
+      (the encoded output) is sent to our Google Sheets database via Google Apps Script.
+    </p>
+    <p>
+      We cannot decrypt or read the content of your files. Encoded data appears as
+      a stream of characters that is meaningless without the TOTKA decoding engine.
+    </p>
+  </div>
+
+  <div class="legal-section">
+    <h2>3. Storage Infrastructure</h2>
+    <p>
+      All data is stored in <strong>Google Sheets</strong> spreadsheets managed by the
+      TOTKA administrator. By using TOTKA, your data is subject to
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">
+        Google's Privacy Policy</a> as well as this policy.
+    </p>
+    <p>
+      Google Apps Script Web Apps process your requests. No third-party databases or
+      analytics services are used.
+    </p>
+  </div>
+
+  <div class="legal-section">
+    <h2>4. Profile Pictures</h2>
+    <p>
+      Profile pictures are compressed to a maximum of 50KB using the Canvas API in
+      your browser before being stored. Pictures are stored as base64-encoded strings
+      in Google Sheets. They are publicly visible on your profile page.
+    </p>
+  </div>
+
+  <div class="legal-section">
+    <h2>5. Cookies &amp; Local Storage</h2>
+    <p>TOTKA does <strong>not</strong> use tracking cookies. We use:</p>
+    <ul>
+      <li><strong>localStorage</strong> — to store your login session token (token, user ID, username, profile pic). Cleared on logout.</li>
+      <li><strong>sessionStorage</strong> — to cache feed pages temporarily (cleared when you close the tab).</li>
+      <li><strong>localStorage</strong> — to store your recent decode history (Post IDs only, stored on your device, never sent to us).</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <h2>6. NSFW Content</h2>
+    <p>
+      Users who mark content as NSFW (18+) take responsibility for doing so accurately.
+      NSFW content is hidden behind a blur filter by default and requires explicit user
+      action to reveal. The platform administrator reserves the right to remove NSFW
+      content that violates the Terms of Service.
+    </p>
+  </div>
+
+  <div class="legal-section">
+    <h2>7. Admin &amp; Notifications</h2>
+    <p>
+      The platform administrator receives Telegram notifications for new user signups,
+      post uploads, and system events. This includes your username, user ID, and post
+      details — but never your password or file contents.
+    </p>
+  </div>
+
+  <div class="legal-section">
+    <h2>8. Data Deletion</h2>
+    <p>
+      You can delete your own posts from your profile page at any time. To request
+      complete account deletion, contact the administrator. Note that encoded file
+      chunks in storage sheets may not be fully removed even after post deletion
+      (see the About page for technical details on why).
+    </p>
+  </div>
+
+  <div class="legal-section">
+    <h2>9. Children's Privacy</h2>
+    <p>
+      TOTKA is not intended for users under 13 years of age. NSFW content on TOTKA
+      is strictly for users aged 18 and over. If you believe a minor has created an
+      account, please contact the administrator.
+    </p>
+  </div>
+
+  <div class="legal-section">
+    <h2>10. Changes to This Policy</h2>
+    <p>
+      We may update this privacy policy from time to time. The "Last updated" date
+      at the top of this page will reflect the most recent revision.
+      Continued use of TOTKA after changes constitutes acceptance of the updated policy.
+    </p>
+  </div>
+
+  <div class="contact-box">
+    <p>Questions about this policy?<br/>
+    Contact the admin via
+    <a href="https://t.me/TOTKA_Admin_bot" target="_blank">@TOTKA_Admin_bot</a>
+    on Telegram.</p>
+  </div>
+
+</main>
+
+<nav class="bottom-nav">
+  <a href="index.html"   class="nav-item"><span class="nav-item__icon">🏠</span><span class="nav-item__label">Home</span></a>
+  <a href="encode.html"  class="nav-item"><span class="nav-item__icon">⬆️</span><span class="nav-item__label">Encode</span></a>
+  <a href="decode.html"  class="nav-item"><span class="nav-item__icon">⬇️</span><span class="nav-item__label">Decode</span></a>
+  <a href="profile.html" class="nav-item"><span class="nav-item__icon">👤</span><span class="nav-item__label">Profile</span></a>
+</nav>
+
+<script src="js/config.js"></script>
+</body>
+</html>

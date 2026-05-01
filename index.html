@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TOTKA — Free File Sharing</title>
+  <meta name="description" content="TOTKA — Encode any file into text. Share it anywhere. Decode it back. Free, serverless, unlimited."/>
+  <meta name="theme-color" content="#0d1117"/>
+
+  <!-- Open Graph -->
+  <meta property="og:title"       content="TOTKA — Free File Sharing"/>
+  <meta property="og:description" content="Encode any file into shareable text. Zero server. Zero cost."/>
+  <meta property="og:type"        content="website"/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+
+  <link rel="stylesheet" href="css/app.css"/>
+
+  <style>
+    /* ── PAGE-SPECIFIC OVERRIDES ─────────────────────────── */
+
+    /* Gradient hero behind top nav */
+    .page-bg {
+      position:   fixed;
+      inset:      0;
+      background:
+        radial-gradient(ellipse 90% 35% at 50% -5%,
+          rgba(88,166,255,0.07) 0%, transparent 70%);
+      pointer-events:none;
+      z-index:   -1;
+    }
+
+    /* Controls bar (filters + sort) */
+    .controls-bar {
+      padding:       8px 0 4px;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: var(--space-sm);
+      position:      sticky;
+      top:           54px;  /* below top-nav */
+      background:    rgba(13,17,23,0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      z-index:       800;
+    }
+
+    /* NSFW toggle in controls */
+    .nsfw-control {
+      display:     flex;
+      align-items: center;
+      gap:         6px;
+      font-size:   11px;
+      color:       var(--text-muted);
+      margin-left: auto;
+      flex-shrink: 0;
+      cursor:      pointer;
+      user-select: none;
+      padding:     2px 0;
+    }
+    .nsfw-control .toggle {
+      width:  34px;
+      height: 18px;
+    }
+    .nsfw-control .toggle::after {
+      width: 12px; height:12px;
+    }
+    .nsfw-control .toggle.on::after { left:16px; }
+
+    /* Tag + nsfw row */
+    .filter-row {
+      display:     flex;
+      align-items: center;
+      gap:         var(--space-sm);
+    }
+    .filter-row .tag-filter-wrap {
+      flex: 1;
+      padding: 4px 0;
+    }
+
+    /* Load more trigger */
+    .load-more-trigger {
+      height:         80px;
+      display:        flex;
+      align-items:    center;
+      justify-content:center;
+    }
+    #load-spinner { display:none; }
+
+    /* Empty + skeleton spacing */
+    #skeleton-wrap  { margin-top:var(--space-md); }
+    #empty-state    { margin-top:var(--space-lg);  display:none; }
+
+    /* Toast above bottom nav */
+    #totka-toast { bottom: calc(var(--nav-height) + 12px) !important; }
+  </style>
+</head>
+<body>
+
+<!-- Background gradient -->
+<div class="page-bg"></div>
+
+<!-- ══════════════ TOP NAV ══════════════ -->
+<nav class="top-nav">
+  <a href="index.html" class="top-nav__logo">TOTKA</a>
+
+  <!-- Search bar -->
+  <div class="top-nav__search">
+    <span class="search-icon">🔍</span>
+    <input type="search" id="search-input"
+      placeholder="Search files, tags..."
+      autocomplete="off" autocapitalize="none" spellcheck="false"/>
+  </div>
+
+  <!-- Nav icons -->
+  <div class="top-nav__actions">
+    <a href="encode.html" class="nav-icon-btn" title="Upload / Encode">⬆️</a>
+    <!-- Profile avatar — JS sets href and content -->
+    <a href="login.html" class="nav-avatar" id="nav-profile-link"
+       title="Profile">?</a>
+  </div>
+</nav>
+
+
+<!-- ══════════════ CONTROLS BAR ══════════════ -->
+<div class="controls-bar">
+  <div class="page-container">
+
+    <!-- Tag filter pills (horizontal scroll) -->
+    <div class="filter-row">
+      <div class="tag-filter-wrap" id="tag-wrap">
+        <button class="tag-pill tag-pill--active" data-tag="">🔥 All</button>
+        <button class="tag-pill" data-tag="photo">📷 photo</button>
+        <button class="tag-pill" data-tag="video">🎬 video</button>
+        <button class="tag-pill" data-tag="pdf">📄 pdf</button>
+        <button class="tag-pill" data-tag="zip">🗜️ zip</button>
+        <button class="tag-pill" data-tag="audio">🎵 audio</button>
+        <button class="tag-pill" data-tag="apk">📱 apk</button>
+        <button class="tag-pill" data-tag="doc">📝 doc</button>
+        <button class="tag-pill" data-tag="game">🎮 game</button>
+        <button class="tag-pill" data-tag="code">💻 code</button>
+        <button class="tag-pill" data-tag="ebook">📚 ebook</button>
+      </div>
+
+      <!-- NSFW toggle -->
+      <label class="nsfw-control" title="Show NSFW content">
+        <div class="toggle nsfw-toggle" id="nsfw-toggle"></div>
+        <span>18+</span>
+      </label>
+    </div>
+
+    <!-- Sort pills -->
+    <div class="sort-wrap" id="sort-wrap">
+      <button class="sort-pill sort-pill--active" data-sort="newest">✨ Newest</button>
+      <button class="sort-pill" data-sort="oldest">📅 Oldest</button>
+      <button class="sort-pill" data-sort="az">🔤 A→Z</button>
+      <button class="sort-pill" data-sort="za">🔡 Z→A</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════ MAIN CONTENT ══════════════ -->
+<main class="page-container" style="padding-top:var(--space-md)">
+
+  <!-- Skeleton loaders (shown while fetching) -->
+  <div id="skeleton-wrap"></div>
+
+  <!-- Empty state -->
+  <div id="empty-state"></div>
+
+  <!-- Feed list (cards injected here by feed.js) -->
+  <div id="feed-list" class="feed-list"></div>
+
+  <!-- Infinite scroll trigger -->
+  <div class="load-more-trigger" id="load-trigger">
+    <div class="spinner" id="load-spinner"></div>
+  </div>
+
+</main>
+
+
+<!-- ══════════════ BOTTOM NAV ══════════════ -->
+<nav class="bottom-nav">
+  <a href="index.html"   class="nav-item nav-item--active">
+    <span class="nav-item__icon">🏠</span>
+    <span class="nav-item__label">Home</span>
+  </a>
+  <a href="encode.html"  class="nav-item">
+    <span class="nav-item__icon">⬆️</span>
+    <span class="nav-item__label">Encode</span>
+  </a>
+  <a href="decode.html"  class="nav-item">
+    <span class="nav-item__icon">⬇️</span>
+    <span class="nav-item__label">Decode</span>
+  </a>
+  <a href="profile.html" class="nav-item">
+    <span class="nav-item__icon">👤</span>
+    <span class="nav-item__label">Profile</span>
+  </a>
+</nav>
+
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/image.js"></script>
+<script src="js/feed.js"></script>
+
+</body>
+</html>

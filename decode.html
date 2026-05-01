@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Decode File — TOTKA</title>
+  <meta name="description" content="Enter a TOTKA Post ID to decode and download the original file."/>
+  <meta name="theme-color" content="#0d1117"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/app.css"/>
+
+  <style>
+    /* ── PAGE-SPECIFIC ───────────────────────────────────── */
+    .decode-header {
+      padding:    var(--space-lg) 0 var(--space-md);
+      text-align: center;
+    }
+    .decode-header h1 {
+      font-size:     1.3rem;
+      color:         var(--accent-blue);
+      margin-bottom: 4px;
+    }
+    .decode-header p { font-size:12px; color:var(--text-muted); }
+
+    /* Big ID input */
+    .id-input-wrap {
+      position:      relative;
+      margin-bottom: var(--space-sm);
+    }
+    #post-id-input {
+      text-transform: lowercase;
+      font-size:      1.1rem;
+      font-weight:    700;
+      letter-spacing: 2px;
+      padding:        14px 110px 14px 16px; /* room for paste btn */
+      color:          var(--accent-blue);
+    }
+    #post-id-input::placeholder {
+      color:          var(--text-muted);
+      font-size:      0.9rem;
+      letter-spacing: 0;
+      font-weight:    400;
+    }
+    #paste-btn {
+      position:    absolute;
+      right:       8px;
+      top:         50%;
+      transform:   translateY(-50%);
+      background:  var(--bg-tertiary);
+      border:      1px solid var(--glass-border);
+      border-radius:var(--radius-sm);
+      color:       var(--text-muted);
+      font-family: var(--font-body);
+      font-size:   11px;
+      padding:     4px 10px;
+      cursor:      pointer;
+      transition:  var(--transition);
+      white-space: nowrap;
+    }
+    #paste-btn:hover { color:var(--text-primary); border-color:var(--accent-blue); }
+
+    /* ID hint */
+    #id-hint {
+      font-size:   11px;
+      min-height:  16px;
+      margin-top:  4px;
+      transition:  color 0.2s;
+    }
+
+    /* How it works */
+    .how-it-works {
+      background:    var(--glass-bg);
+      border:        1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding:       var(--space-md);
+      margin-bottom: var(--space-md);
+    }
+    .how-it-works__title {
+      font-size:     11px;
+      text-transform:uppercase;
+      letter-spacing:1.5px;
+      color:         var(--accent-blue);
+      margin-bottom: var(--space-sm);
+    }
+    .how-steps {
+      display:        flex;
+      flex-direction: column;
+      gap:            8px;
+    }
+    .how-step {
+      display:     flex;
+      align-items: flex-start;
+      gap:         10px;
+      font-size:   12px;
+      color:       var(--text-secondary);
+    }
+    .how-step__num {
+      width:          22px;
+      height:         22px;
+      border-radius:  50%;
+      background:     rgba(88,166,255,0.12);
+      border:         1px solid rgba(88,166,255,0.25);
+      color:          var(--accent-blue);
+      font-size:      11px;
+      font-weight:    700;
+      display:        flex;
+      align-items:    center;
+      justify-content:center;
+      flex-shrink:    0;
+    }
+
+    /* Post info card */
+    #post-info-card { display:none; animation:fadeIn 0.3s ease; }
+
+    /* Result card */
+    #result-card { display:none; animation:fadeIn 0.3s ease; }
+
+    /* Error box */
+    #error-box { display:none; animation:fadeIn 0.3s ease; }
+
+    /* Recent decodes section */
+    #recent-section {
+      display:       none;
+      margin-bottom: var(--space-md);
+      animation:     fadeIn 0.3s ease;
+    }
+    .recent-section-header {
+      display:         flex;
+      align-items:     center;
+      justify-content: space-between;
+      margin-bottom:   var(--space-sm);
+    }
+    .recent-section-title {
+      font-size:     11px;
+      text-transform:uppercase;
+      letter-spacing:1.5px;
+      color:         var(--text-muted);
+    }
+    .clear-recent-btn {
+      background:  none;
+      border:      none;
+      color:       var(--text-muted);
+      font-size:   11px;
+      font-family: var(--font-body);
+      cursor:      pointer;
+      transition:  color 0.15s;
+      padding:     0;
+    }
+    .clear-recent-btn:hover { color:var(--accent-red-br); }
+
+    #recent-wrap {
+      display:        flex;
+      flex-direction: column;
+      gap:            6px;
+    }
+    .recent-item {
+      display:       grid;
+      grid-template-columns: auto 1fr auto;
+      align-items:   center;
+      gap:           10px;
+      padding:       10px 14px;
+      background:    var(--glass-bg);
+      border:        1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      cursor:        pointer;
+      font-family:   var(--font-body);
+      text-align:    left;
+      transition:    var(--transition);
+      width:         100%;
+    }
+    .recent-item:hover {
+      border-color: var(--accent-blue);
+      background:   rgba(88,166,255,0.05);
+    }
+    .recent-item__id {
+      font-size:   12px;
+      font-weight: 700;
+      color:       var(--accent-blue);
+      letter-spacing:1px;
+    }
+    .recent-item__title {
+      font-size:     12px;
+      color:         var(--text-secondary);
+      overflow:      hidden;
+      text-overflow: ellipsis;
+      white-space:   nowrap;
+    }
+    .recent-item__size {
+      font-size:  11px;
+      color:      var(--text-muted);
+      white-space:nowrap;
+      flex-shrink:0;
+    }
+
+    /* Decode button */
+    #decode-btn {
+      font-size:     15px;
+      padding:       13px;
+      letter-spacing:1px;
+    }
+    #decode-btn:disabled {
+      opacity:0.6;
+      cursor:not-allowed;
+    }
+
+    /* Info banner at top */
+    .info-banner {
+      display:       flex;
+      align-items:   flex-start;
+      gap:           10px;
+      background:    rgba(88,166,255,0.05);
+      border:        1px solid rgba(88,166,255,0.15);
+      border-radius: var(--radius-sm);
+      padding:       10px 14px;
+      margin-bottom: var(--space-md);
+      font-size:     12px;
+      color:         var(--text-muted);
+      line-height:   1.6;
+    }
+    .info-banner__icon { font-size:1rem; flex-shrink:0; margin-top:1px; }
+
+    /* Progress container spacing */
+    #progress-container { margin: var(--space-md) 0; }
+
+    @media (max-width:480px) {
+      #post-id-input { font-size:0.95rem; letter-spacing:1px; padding-right:90px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ TOP NAV ══════════════ -->
+<nav class="top-nav">
+  <a href="index.html" class="top-nav__logo">TOTKA</a>
+  <div style="flex:1"></div>
+  <div class="top-nav__actions">
+    <a href="encode.html" class="nav-icon-btn" title="Encode a file">⬆️</a>
+    <a href="login.html"  class="nav-avatar" id="nav-profile-link" title="Profile">?</a>
+  </div>
+</nav>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="page-container">
+
+  <div class="decode-header">
+    <h1>⬇️ Decode &amp; Download</h1>
+    <p>Enter a Post ID to retrieve and download the original file</p>
+  </div>
+
+  <!-- Info banner -->
+  <div class="info-banner">
+    <span class="info-banner__icon">💡</span>
+    <span>
+      Post IDs look like <strong style="color:var(--accent-blue)">im00042</strong>.
+      You can get them from the feed, or ask the person who shared the file.
+      No account needed to decode!
+    </span>
+  </div>
+
+  <!-- ── DECODE FORM ─────────────────────────────────────── -->
+  <form id="decode-form" novalidate autocomplete="off"
+    style="margin-bottom:var(--space-md)">
+
+    <div class="form-group">
+      <label class="form-label" for="post-id-input">Post ID</label>
+      <div class="id-input-wrap">
+        <input class="form-input" type="text" id="post-id-input"
+          placeholder="im00042"
+          autocomplete="off" autocapitalize="none"
+          autocorrect="off" spellcheck="false"
+          inputmode="text"/>
+        <button type="button" id="paste-btn">📋 Paste</button>
+      </div>
+      <div id="id-hint"></div>
+    </div>
+
+    <!-- Progress bar -->
+    <div id="progress-container"></div>
+
+    <!-- Post info (shown while loading) -->
+    <div id="post-info-card"></div>
+
+    <!-- Error box -->
+    <div id="error-box"></div>
+
+    <!-- Result card -->
+    <div id="result-card"></div>
+
+    <button type="submit" class="btn btn--primary btn--full" id="decode-btn">
+      🔓 Decode &amp; Download
+    </button>
+
+  </form>
+
+  <!-- ── RECENT DECODES ─────────────────────────────────── -->
+  <div id="recent-section">
+    <div class="recent-section-header">
+      <span class="recent-section-title">🕐 Recently Decoded</span>
+      <button class="clear-recent-btn" onclick="DECODE_PAGE.clearRecent()">
+        Clear
+      </button>
+    </div>
+    <div id="recent-wrap"></div>
+  </div>
+
+  <!-- ── HOW IT WORKS ───────────────────────────────────── -->
+  <div class="how-it-works">
+    <div class="how-it-works__title">How Decoding Works</div>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-step__num">1</div>
+        <div>Enter the <strong>Post ID</strong> (e.g. <code class="code-inline">im00042</code>) you received from the file uploader.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step__num">2</div>
+        <div>TOTKA fetches the <strong>encoded text chunks</strong> from secure cloud storage.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step__num">3</div>
+        <div>The 18-bit engine <strong>decodes the text</strong> back to binary bytes in your browser — nothing sent to any server.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-step__num">4</div>
+        <div>The <strong>original file downloads</strong> directly to your device — zero upload, zero cost.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════ BOTTOM NAV ══════════════ -->
+<nav class="bottom-nav">
+  <a href="index.html"   class="nav-item">
+    <span class="nav-item__icon">🏠</span>
+    <span class="nav-item__label">Home</span>
+  </a>
+  <a href="encode.html"  class="nav-item">
+    <span class="nav-item__icon">⬆️</span>
+    <span class="nav-item__label">Encode</span>
+  </a>
+  <a href="decode.html"  class="nav-item nav-item--active">
+    <span class="nav-item__icon">⬇️</span>
+    <span class="nav-item__label">Decode</span>
+  </a>
+  <a href="profile.html" class="nav-item">
+    <span class="nav-item__icon">👤</span>
+    <span class="nav-item__label">Profile</span>
+  </a>
+</nav>
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/decode.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About — TOTKA</title>
+  <meta name="description" content="Learn how TOTKA works — the free, serverless file sharing platform powered by Google Sheets and 18-bit encoding."/>
+  <meta name="theme-color" content="#0d1117"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/app.css"/>
+
+  <style>
+    .about-hero {
+      text-align:  center;
+      padding:     var(--space-xl) 0 var(--space-lg);
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%,
+          rgba(88,166,255,0.08) 0%, transparent 70%);
+    }
+    .about-hero__logo {
+      font-family:   var(--font-heading);
+      font-size:     3rem;
+      font-weight:   900;
+      color:         var(--accent-blue);
+      letter-spacing:6px;
+      text-shadow:   0 0 40px rgba(88,166,255,0.5);
+      margin-bottom: 8px;
+    }
+    .about-hero__tagline {
+      font-size:     13px;
+      color:         var(--text-muted);
+      letter-spacing:2px;
+      margin-bottom: var(--space-lg);
+    }
+    .about-hero__badges {
+      display:         flex;
+      gap:             8px;
+      justify-content: center;
+      flex-wrap:       wrap;
+    }
+
+    /* Content sections */
+    .about-section {
+      margin-bottom: var(--space-xl);
+    }
+    .about-section h2 {
+      font-size:     1rem;
+      color:         var(--accent-blue);
+      margin-bottom: var(--space-md);
+      padding-bottom:8px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .about-section p {
+      font-size:  13px;
+      line-height:1.8;
+      color:      var(--text-secondary);
+      margin-bottom:var(--space-sm);
+    }
+
+    /* How it works steps */
+    .steps-list {
+      display:        flex;
+      flex-direction: column;
+      gap:            var(--space-md);
+    }
+    .step-item {
+      display:     flex;
+      gap:         var(--space-md);
+      align-items: flex-start;
+    }
+    .step-num {
+      width:          40px;
+      height:         40px;
+      border-radius:  50%;
+      background:     rgba(88,166,255,0.1);
+      border:         1px solid rgba(88,166,255,0.25);
+      color:          var(--accent-blue);
+      font-family:    var(--font-heading);
+      font-size:      0.9rem;
+      font-weight:    700;
+      display:        flex;
+      align-items:    center;
+      justify-content:center;
+      flex-shrink:    0;
+    }
+    .step-content h3 {
+      font-family:   var(--font-body);
+      font-size:     13px;
+      font-weight:   700;
+      color:         var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .step-content p {
+      font-size:   12px;
+      color:       var(--text-muted);
+      line-height: 1.7;
+      margin:      0;
+    }
+
+    /* Tech stack grid */
+    .tech-grid {
+      display:               grid;
+      grid-template-columns: 1fr 1fr;
+      gap:                   var(--space-sm);
+    }
+    @media(min-width:600px) { .tech-grid { grid-template-columns: repeat(3,1fr); } }
+
+    .tech-card {
+      background:    var(--bg-tertiary);
+      border:        1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding:       14px;
+      text-align:    center;
+    }
+    .tech-card__icon  { font-size:1.8rem; margin-bottom:6px; }
+    .tech-card__name  { font-size:12px; font-weight:700; color:var(--text-primary); }
+    .tech-card__desc  { font-size:10px; color:var(--text-muted); margin-top:3px; }
+
+    /* Feature list */
+    .feature-list {
+      display:        flex;
+      flex-direction: column;
+      gap:            10px;
+    }
+    .feature-item {
+      display:     flex;
+      align-items: flex-start;
+      gap:         10px;
+      font-size:   13px;
+      color:       var(--text-secondary);
+      line-height: 1.6;
+    }
+    .feature-icon { font-size:1.1rem; flex-shrink:0; margin-top:1px; }
+
+    /* Encoding explainer */
+    .encoding-box {
+      background:    var(--bg-tertiary);
+      border:        1px solid rgba(88,166,255,0.2);
+      border-radius: var(--radius-md);
+      padding:       var(--space-md);
+      font-family:   var(--font-body);
+      font-size:     12px;
+      color:         var(--text-secondary);
+      line-height:   1.8;
+      margin-bottom: var(--space-md);
+    }
+    .encoding-box code {
+      color:       var(--accent-blue);
+      background:  rgba(88,166,255,0.1);
+      padding:     1px 5px;
+      border-radius:3px;
+    }
+
+    /* CTA */
+    .about-cta {
+      text-align:    center;
+      padding:       var(--space-xl) 0;
+      border-top:    1px solid var(--glass-border);
+      margin-top:    var(--space-xl);
+    }
+    .about-cta h2 {
+      font-size:     1.3rem;
+      margin-bottom: var(--space-sm);
+      border:        none;
+      color:         var(--text-primary);
+    }
+    .about-cta p  { margin-bottom:var(--space-md); }
+    .cta-buttons  { display:flex; gap:var(--space-sm); justify-content:center; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <a href="index.html" class="top-nav__logo">TOTKA</a>
+  <div style="flex:1"></div>
+  <div class="top-nav__actions">
+    <a href="encode.html" class="nav-icon-btn" title="Upload">⬆️</a>
+    <a href="login.html"  class="nav-avatar" id="nav-avatar" title="Profile">?</a>
+  </div>
+</nav>
+
+<main class="page-container">
+
+  <!-- Hero -->
+  <div class="about-hero">
+    <div class="about-hero__logo">TOTKA</div>
+    <p class="about-hero__tagline">ENCODE · SHARE · DECODE</p>
+    <div class="about-hero__badges">
+      <span class="badge badge--blue">🆓 100% Free</span>
+      <span class="badge badge--green">☁️ Serverless</span>
+      <span class="badge badge--blue">🔒 No Upload</span>
+      <span class="badge badge--green">♾️ Unlimited Files</span>
+      <span class="badge badge--gold">🇧🇩 Made in BD</span>
+    </div>
+  </div>
+
+  <!-- What is TOTKA -->
+  <div class="about-section">
+    <h2>🤔 What is TOTKA?</h2>
+    <p>
+      TOTKA is a <strong>free, serverless file sharing platform</strong> that works by
+      converting any file — images, videos, documents, APKs, anything — into a compact
+      text string. That text string is stored in Google Sheets and can be shared with
+      anyone using just a short <strong>Post ID</strong> like <code class="code-inline">im00042</code>.
+    </p>
+    <p>
+      To get the original file back, the recipient enters the Post ID and TOTKA's
+      18-bit decoding engine reconstructs the exact original bytes in their browser —
+      no server involved, no upload required, zero cost.
+    </p>
+  </div>
+
+  <!-- How it works -->
+  <div class="about-section">
+    <h2>⚙️ How It Works</h2>
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Compress</h3>
+          <p>Your file's binary data is first compressed using <strong>zlib (deflate level 9)</strong>
+            — the same algorithm used in ZIP files — to minimize size before encoding.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>18-bit Encode</h3>
+          <p>The compressed bytes are read into a bit buffer. Every <strong>18 bits</strong>
+            are extracted and mapped to a character — either from an 86-character ASCII pool
+            or a Unicode Private Use Area codepoint. This produces a compact, safe text string.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Store in Google Sheets</h3>
+          <p>The encoded text is split into <strong>45,000-character chunks</strong>
+            (Google Sheets allows up to 50,000 per cell) and stored across multiple
+            storage spreadsheets. A master index tracks every post's metadata.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>Share with a Post ID</h3>
+          <p>Each upload gets a unique <strong>Post ID</strong> (e.g. <code class="code-inline">im00042</code>).
+            Share this 7-character ID anywhere — chat, social media, email.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h3>Decode &amp; Download</h3>
+          <p>The recipient enters the Post ID. TOTKA fetches the chunks, runs the
+            <strong>18-bit decode</strong> entirely in their browser, decompresses with zlib,
+            and triggers a file download — your original file, bit-for-bit identical.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Encoding Engine -->
+  <div class="about-section">
+    <h2>🔬 The Encoding Engine</h2>
+    <div class="encoding-box">
+      <strong>Character Pool (86 chars):</strong><br/>
+      <code>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789০১২৩৪৫৬৭৮৯!#$%&amp;*+-./:;&lt;=&gt;?@^_`{|}~₹</code>
+      <br/><br/>
+      <strong>Unicode Private Use Area:</strong> <code>U+E000</code> and above<br/>
+      <strong>Chunk size:</strong> <code>18 bits</code> → 2¹⁸ = 262,144 possible values<br/>
+      <strong>Values 0–85</strong> → ASCII pool character<br/>
+      <strong>Values 86–262,143</strong> → Unicode codepoint (safe, never conflicts with text)<br/><br/>
+      Leftover bits at the end are zero-padded to complete a full 18-bit chunk.
+      On decode, zlib's internal End-of-Stream marker automatically discards the padding.
+    </div>
+    <p>
+      Why 18 bits? Because 2¹⁸ = 262,144 fits perfectly within Unicode's Private Use Area
+      (U+E000–U+F8FF and beyond), giving us a huge value range while staying safe from
+      display conflicts. The system encodes ~2.25 bits of data per bit of output character,
+      achieving efficient compression while remaining fully text-safe.
+    </p>
+  </div>
+
+  <!-- Tech stack -->
+  <div class="about-section">
+    <h2>🛠️ Tech Stack</h2>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-card__icon">📄</div>
+        <div class="tech-card__name">GitHub Pages</div>
+        <div class="tech-card__desc">Free static hosting</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-card__icon">📊</div>
+        <div class="tech-card__name">Google Sheets</div>
+        <div class="tech-card__desc">Free database</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-card__icon">⚡</div>
+        <div class="tech-card__name">Google Apps Script</div>
+        <div class="tech-card__desc">Free serverless backend</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-card__icon">🗜️</div>
+        <div class="tech-card__name">pako (zlib)</div>
+        <div class="tech-card__desc">Browser-side compression</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-card__icon">🤖</div>
+        <div class="tech-card__name">Telegram Bot</div>
+        <div class="tech-card__desc">Admin notifications</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-card__icon">🔷</div>
+        <div class="tech-card__name">BigInt JS</div>
+        <div class="tech-card__desc">Overflow-safe bit ops</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="about-section">
+    <h2>✨ Features</h2>
+    <div class="feature-list">
+      <div class="feature-item">
+        <span class="feature-icon">🆓</span>
+        <span><strong>100% Free Forever</strong> — No server costs, no hosting fees.
+          Runs on Google's free tier (Apps Script + Sheets).</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">📁</span>
+        <span><strong>Any File Type</strong> — Images, videos, audio, documents, APKs,
+          ZIPs, executables — if it's a file, TOTKA can encode it.</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">🔒</span>
+        <span><strong>No Upload to Servers</strong> — Files are encoded entirely in your
+          browser. Only the encoded text string is stored — no binary blobs on any server.</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">♾️</span>
+        <span><strong>Unlimited Storage Expansion</strong> — Each Google Sheet holds
+          500,000 rows. Adding more storage takes 30 seconds via the Admin Panel.</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">🔍</span>
+        <span><strong>Searchable Feed</strong> — Browse posts by tags, sort by newest/oldest/A-Z,
+          full-text search across titles, descriptions, and tags.</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">👤</span>
+        <span><strong>User Accounts</strong> — Create a profile, manage your uploads,
+          link social media, and optionally connect your own personal Google Sheet.</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">🔞</span>
+        <span><strong>NSFW Support</strong> — Adult content is hidden behind a blur filter
+          by default. Users must explicitly enable NSFW to see 18+ posts.</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">📱</span>
+        <span><strong>Mobile-First</strong> — Built for phones first. Bottom navigation,
+          infinite scroll, tap-to-reveal, Web Share API support.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Limitations -->
+  <div class="about-section">
+    <h2>⚠️ Limitations</h2>
+    <div class="feature-list">
+      <div class="feature-item">
+        <span class="feature-icon">🐢</span>
+        <span><strong>Large files are slow</strong> — Files over 50MB may take several
+          minutes to encode/decode in the browser. The Web Worker helps keep the UI
+          responsive, but encoding is CPU-intensive.</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">⏱️</span>
+        <span><strong>GAS response time</strong> — Google Apps Script Web Apps have a
+          cold-start latency of 1–3 seconds. The first request after inactivity may be slow.</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">📏</span>
+        <span><strong>Google Sheets quota</strong> — Free Google accounts have API
+          rate limits. Very high traffic may hit quotas. A Workspace account raises these limits.</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">🗑️</span>
+        <span><strong>No chunk deletion</strong> — Deleting a post removes it from the
+          feed index, but the encoded chunks in the storage sheet remain to avoid complex
+          row-tracking. Storage is consumed permanently per upload.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="about-cta">
+    <h2>Ready to share?</h2>
+    <p>Upload your first file and get a shareable Post ID in seconds.</p>
+    <div class="cta-buttons">
+      <a href="encode.html" class="btn btn--primary btn--lg">⬆️ Encode a File</a>
+      <a href="decode.html" class="btn btn--ghost btn--lg">⬇️ Decode a File</a>
+    </div>
+  </div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a href="index.html"   class="nav-item">
+    <span class="nav-item__icon">🏠</span>
+    <span class="nav-item__label">Home</span>
+  </a>
+  <a href="encode.html"  class="nav-item">
+    <span class="nav-item__icon">⬆️</span>
+    <span class="nav-item__label">Encode</span>
+  </a>
+  <a href="decode.html"  class="nav-item">
+    <span class="nav-item__icon">⬇️</span>
+    <span class="nav-item__label">Decode</span>
+  </a>
+  <a href="profile.html" class="nav-item">
+    <span class="nav-item__icon">👤</span>
+    <span class="nav-item__label">Profile</span>
+  </a>
+</nav>
+
+<script src="js/config.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const el = document.getElementById("nav-avatar");
+    if (el && SESSION.isLoggedIn()) {
+      el.href = "profile.html";
+      const pic = SESSION.getPic();
+      if (pic) { el.style.backgroundImage=`url(${pic})`; el.style.backgroundSize="cover"; el.textContent=""; }
+      else el.textContent = (SESSION.getName()||SESSION.getUsername()||"?").charAt(0).toUpperCase();
+    }
+  });
+</script>
+</body>
+</html>

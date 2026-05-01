@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — TOTKA</title>
+  <meta name="description" content="Login or create a free TOTKA account to share encoded files."/>
+  <meta name="theme-color" content="#0d1117"/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ── RESET & BASE ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:   #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary:  #21262d;
+      --accent-blue:  #58a6ff;
+      --accent-green: #238636;
+      --accent-gold:  #d29922;
+      --accent-red:   #da3633;
+      --text-primary: #e6edf3;
+      --text-muted:   #8b949e;
+      --glass-bg:     rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.08);
+      --glow-blue:    0 0 30px rgba(88,166,255,0.15);
+      --radius:       12px;
+      --font-h:       'Orbitron', monospace;
+      --font-b:       'JetBrains Mono', monospace;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg-primary);
+      color:      var(--text-primary);
+      font-family:var(--font-b);
+    }
+
+    /* ── PAGE LAYOUT ─────────────────────────────────────── */
+    .auth-page {
+      min-height:      100vh;
+      display:         flex;
+      flex-direction:  column;
+      align-items:     center;
+      justify-content: center;
+      padding:         24px 16px 40px;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(88,166,255,0.08) 0%, transparent 70%);
+    }
+
+    /* ── LOGO ────────────────────────────────────────────── */
+    .auth-logo {
+      font-family: var(--font-h);
+      font-size:   2rem;
+      font-weight: 900;
+      color:       var(--accent-blue);
+      letter-spacing: 4px;
+      text-decoration: none;
+      margin-bottom: 6px;
+      text-shadow: 0 0 30px rgba(88,166,255,0.5);
+    }
+    .auth-tagline {
+      font-size:     11px;
+      color:         var(--text-muted);
+      letter-spacing:1px;
+      margin-bottom: 28px;
+      text-align:    center;
+    }
+
+    /* ── CARD ────────────────────────────────────────────── */
+    .auth-card {
+      width:         100%;
+      max-width:     420px;
+      background:    var(--glass-bg);
+      border:        1px solid var(--glass-border);
+      border-radius: var(--radius);
+      box-shadow:    var(--glow-blue);
+      overflow:      hidden;
+    }
+
+    /* ── TABS ────────────────────────────────────────────── */
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .auth-tab {
+      padding:        14px;
+      background:     none;
+      border:         none;
+      color:          var(--text-muted);
+      font-family:    var(--font-b);
+      font-size:      13px;
+      font-weight:    500;
+      cursor:         pointer;
+      transition:     all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .auth-tab:hover       { color: var(--text-primary); }
+    .tab--active {
+      color:        var(--accent-blue);
+      background:   rgba(88,166,255,0.06);
+      border-bottom:2px solid var(--accent-blue);
+    }
+
+    /* ── PANELS ──────────────────────────────────────────── */
+    .auth-panel { padding: 24px; }
+    .hidden     { display: none !important; }
+
+    /* ── FORM GROUPS ─────────────────────────────────────── */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display:       block;
+      font-size:     11px;
+      color:         var(--text-muted);
+      margin-bottom: 6px;
+      letter-spacing:0.5px;
+      text-transform:uppercase;
+    }
+    .form-label span { color: var(--accent-red); margin-left: 2px; }
+
+    .form-input {
+      width:         100%;
+      background:    var(--bg-tertiary);
+      border:        1px solid var(--glass-border);
+      border-radius: 8px;
+      padding:       11px 14px;
+      color:         var(--text-primary);
+      font-family:   var(--font-b);
+      font-size:     13px;
+      outline:       none;
+      transition:    border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow:   0 0 0 3px rgba(88,166,255,0.1);
+    }
+    .form-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+    .form-input.input--error { border-color: var(--accent-red); }
+
+    textarea.form-input {
+      resize:     vertical;
+      min-height: 72px;
+    }
+
+    .field-error {
+      display:    none;
+      font-size:  11px;
+      color:      var(--accent-red);
+      margin-top: 5px;
+    }
+
+    /* ── PASSWORD STRENGTH ───────────────────────────────── */
+    .pass-strength {
+      margin-top: 6px;
+      display:    flex;
+      align-items:center;
+      gap:        8px;
+    }
+    .pass-strength-track {
+      flex:          1;
+      height:        4px;
+      background:    var(--bg-tertiary);
+      border-radius: 999px;
+      overflow:      hidden;
+    }
+    #pass-strength-bar {
+      height:        100%;
+      border-radius: 999px;
+      width:         0%;
+      transition:    width 0.3s ease, background 0.3s ease;
+    }
+    #pass-strength-label {
+      font-size: 10px;
+      min-width: 70px;
+      text-align:right;
+    }
+
+    /* ── PROFILE PIC ─────────────────────────────────────── */
+    .pic-section {
+      display:        flex;
+      align-items:    center;
+      gap:            16px;
+      margin-bottom:  18px;
+    }
+    .pic-preview-wrap {
+      position:     relative;
+      flex-shrink:  0;
+    }
+    #signup-pic-preview {
+      width:         72px;
+      height:        72px;
+      border-radius: 50%;
+      object-fit:    cover;
+      border:        2px solid var(--glass-border);
+      cursor:        pointer;
+      background:    var(--bg-tertiary);
+      transition:    border-color 0.2s;
+    }
+    #signup-pic-preview:hover { border-color: var(--accent-blue); }
+    .pic-preview--loaded {
+      border-color:  var(--accent-green) !important;
+      box-shadow:    0 0 12px rgba(35,134,54,0.4);
+    }
+    .pic-edit-icon {
+      position:      absolute;
+      bottom:        0; right: 0;
+      background:    var(--accent-blue);
+      border-radius: 50%;
+      width:         22px; height: 22px;
+      display:       flex;
+      align-items:   center;
+      justify-content:center;
+      font-size:     12px;
+      cursor:        pointer;
+      pointer-events:none;
+    }
+    .pic-meta { flex: 1; }
+    .pic-meta p {
+      font-size:  11px;
+      color:      var(--text-muted);
+      line-height:1.6;
+    }
+    #signup-pic-status {
+      font-size:  11px;
+      margin-top: 4px;
+      display:    block;
+    }
+    #signup-pic-input { display: none; }
+
+    /* ── SUBMIT BUTTON ───────────────────────────────────── */
+    .btn-submit {
+      width:         100%;
+      padding:       13px;
+      background:    linear-gradient(135deg, #1f6feb, #388bfd);
+      color:         #fff;
+      border:        none;
+      border-radius: 8px;
+      font-family:   var(--font-b);
+      font-size:     14px;
+      font-weight:   700;
+      letter-spacing:1px;
+      cursor:        pointer;
+      transition:    all 0.2s;
+      margin-top:    4px;
+    }
+    .btn-submit:hover:not(:disabled) {
+      background:  linear-gradient(135deg, #388bfd, #58a6ff);
+      box-shadow:  0 4px 20px rgba(88,166,255,0.35);
+      transform:   translateY(-1px);
+    }
+    .btn-submit:disabled {
+      opacity: 0.55;
+      cursor:  not-allowed;
+      transform: none;
+    }
+
+    /* ── GENERAL ERROR ───────────────────────────────────── */
+    .general-error {
+      display:       none;
+      background:    rgba(218,54,51,0.1);
+      border:        1px solid rgba(218,54,51,0.3);
+      border-radius: 8px;
+      padding:       10px 14px;
+      font-size:     13px;
+      color:         #f85149;
+      margin-bottom: 14px;
+      text-align:    center;
+    }
+
+    /* ── DIVIDER ─────────────────────────────────────────── */
+    .auth-divider {
+      text-align: center;
+      margin:     18px 0 0;
+      font-size:  12px;
+      color:      var(--text-muted);
+    }
+    .auth-divider a {
+      color:           var(--accent-blue);
+      text-decoration: none;
+    }
+    .auth-divider a:hover { text-decoration: underline; }
+
+    /* ── SCROLLABLE SIGNUP ───────────────────────────────── */
+    #signup-panel {
+      max-height: 80vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--glass-border) transparent;
+    }
+    #signup-panel::-webkit-scrollbar       { width: 4px; }
+    #signup-panel::-webkit-scrollbar-track { background: transparent; }
+    #signup-panel::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius:2px; }
+
+    /* ── SECTION HEADING (inside signup) ─────────────────── */
+    .form-section-title {
+      font-size:     10px;
+      color:         var(--accent-blue);
+      letter-spacing:2px;
+      text-transform:uppercase;
+      margin:        20px 0 12px;
+      padding-bottom:6px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    /* ── TOAST ANIMATION ─────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity:0; transform:translate(-50%,8px); }
+      to   { opacity:1; transform:translate(-50%,0); }
+    }
+
+    /* ── MOBILE ADJUSTMENTS ──────────────────────────────── */
+    @media (max-width: 440px) {
+      .auth-card   { border-radius: 0; border-left:none; border-right:none; }
+      .auth-panel  { padding: 20px 16px; }
+      #signup-panel{ max-height: none; overflow-y: visible; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-page">
+
+  <!-- Logo -->
+  <a href="index.html" class="auth-logo">TOTKA</a>
+  <p class="auth-tagline">ENCODE · SHARE · DECODE</p>
+
+  <div class="auth-card">
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab tab--active" id="tab-login">Login</button>
+      <button class="auth-tab"             id="tab-signup">Sign Up</button>
+    </div>
+
+    <!-- ══════════════ LOGIN PANEL ══════════════ -->
+    <div class="auth-panel" id="login-panel">
+
+      <p class="general-error field-error" id="login-general-err"></p>
+
+      <form id="login-form" autocomplete="on" novalidate>
+
+        <div class="form-group">
+          <label class="form-label" for="login-id">Email or Username <span>*</span></label>
+          <input class="form-input" type="text" id="login-id"
+            placeholder="you@email.com or @username"
+            autocomplete="username" autocapitalize="none" spellcheck="false"/>
+          <span class="field-error" id="login-id-err"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-pass">Password <span>*</span></label>
+          <input class="form-input" type="password" id="login-pass"
+            placeholder="Your password"
+            autocomplete="current-password"/>
+          <span class="field-error" id="login-pass-err"></span>
+        </div>
+
+        <button class="btn-submit" type="submit" id="login-btn">Login</button>
+
+      </form>
+
+      <p class="auth-divider">
+        New here? <a href="#" id="go-signup">Create an account →</a>
+      </p>
+    </div>
+
+    <!-- ══════════════ SIGNUP PANEL ══════════════ -->
+    <div class="auth-panel hidden" id="signup-panel">
+
+      <p class="general-error field-error" id="signup-general-err"></p>
+
+      <form id="signup-form" autocomplete="off" novalidate>
+
+        <!-- Profile Pic -->
+        <div class="pic-section">
+          <div class="pic-preview-wrap">
+            <img id="signup-pic-preview"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3MiIgaGVpZ2h0PSI3MiIgdmlld0JveD0iMCAwIDcyIDcyIj48cmVjdCB3aWR0aD0iNzIiIGhlaWdodD0iNzIiIHJ4PSIzNiIgZmlsbD0iIzIxMjYyZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzhiOTQ5ZSIgZm9udC1zaXplPSIzMCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSI+PzwvdGV4dD48L3N2Zz4="
+              alt="Profile pic"/>
+            <div class="pic-edit-icon">✏️</div>
+          </div>
+          <div class="pic-meta">
+            <p>Optional profile picture<br>Max 50KB · Auto-compressed</p>
+            <span id="signup-pic-status"></span>
+          </div>
+        </div>
+        <input type="file" id="signup-pic-input" accept="image/*"/>
+
+        <!-- Required Info -->
+        <p class="form-section-title">Account Info</p>
+
+        <div class="form-group">
+          <label class="form-label" for="signup-name">Display Name <span>*</span></label>
+          <input class="form-input" type="text" id="signup-name"
+            placeholder="Your full name" maxlength="50" autocapitalize="words"/>
+          <span class="field-error" id="signup-name-err"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signup-username">Username <span>*</span></label>
+          <input class="form-input" type="text" id="signup-username"
+            placeholder="cooluser_123" maxlength="20"
+            autocomplete="off" autocapitalize="none" spellcheck="false"/>
+          <span class="field-error" id="signup-username-err"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signup-loginid">Email or Phone <span>*</span></label>
+          <input class="form-input" type="text" id="signup-loginid"
+            placeholder="you@email.com or 01XXXXXXXXX"
+            autocomplete="email" autocapitalize="none"/>
+          <span class="field-error" id="signup-loginid-err"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signup-pass">Password <span>*</span></label>
+          <input class="form-input" type="password" id="signup-pass"
+            placeholder="Min 6 characters" autocomplete="new-password"/>
+          <div class="pass-strength">
+            <div class="pass-strength-track">
+              <div id="pass-strength-bar"></div>
+            </div>
+            <span id="pass-strength-label"></span>
+          </div>
+          <span class="field-error" id="signup-pass-err"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signup-passconf">Confirm Password <span>*</span></label>
+          <input class="form-input" type="password" id="signup-passconf"
+            placeholder="Repeat password" autocomplete="new-password"/>
+          <span class="field-error" id="signup-passconf-err"></span>
+        </div>
+
+        <!-- Optional Info -->
+        <p class="form-section-title">Optional Info</p>
+
+        <div class="form-group">
+          <label class="form-label" for="signup-bio">Bio</label>
+          <textarea class="form-input" id="signup-bio"
+            placeholder="Tell the world about yourself... (max 150 chars)"
+            maxlength="150" rows="3"></textarea>
+          <span class="field-error" id="signup-bio-err"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signup-profession">Profession</label>
+          <input class="form-input" type="text" id="signup-profession"
+            placeholder="Developer, Designer, Student..." maxlength="60"/>
+        </div>
+
+        <button class="btn-submit" type="submit" id="signup-btn">
+          Create Account
+        </button>
+
+      </form>
+
+      <p class="auth-divider">
+        Already have an account? <a href="#" id="go-login">← Login</a>
+      </p>
+    </div>
+    <!-- end signup panel -->
+
+  </div>
+  <!-- end auth-card -->
+
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/image.js"></script>
+<script src="js/auth.js"></script>
+
+</body>
+</html>

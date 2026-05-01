@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — TOTKA</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="theme-color" content="#0d1117"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/app.css"/>
+
+  <style>
+    /* ── PAGE-SPECIFIC ───────────────────────────────────── */
+    body { padding-bottom: 0; } /* no bottom nav */
+
+    /* Top admin bar */
+    .admin-topbar {
+      position:   sticky;
+      top:        0;
+      z-index:    900;
+      background: rgba(13,17,23,0.96);
+      backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(218,54,51,0.2);
+      height:     54px;
+      display:    flex;
+      align-items:center;
+      padding:    0 var(--space-md);
+      gap:        var(--space-sm);
+    }
+    .admin-topbar__logo {
+      font-family:    var(--font-heading);
+      font-size:      1rem;
+      font-weight:    900;
+      color:          var(--accent-red-br);
+      letter-spacing: 2px;
+      flex:           1;
+    }
+    .admin-badge {
+      font-size:     10px;
+      background:    rgba(218,54,51,0.15);
+      border:        1px solid rgba(218,54,51,0.3);
+      color:         var(--accent-red-br);
+      padding:       2px 8px;
+      border-radius: var(--radius-full);
+      letter-spacing:1px;
+    }
+
+    /* Login screen */
+    .login-screen {
+      min-height:      100vh;
+      display:         flex;
+      align-items:     center;
+      justify-content: center;
+      padding:         var(--space-md);
+      background:
+        radial-gradient(ellipse 60% 40% at 50% 0%,
+          rgba(218,54,51,0.07) 0%, transparent 70%);
+    }
+    #login-card {
+      width:         100%;
+      max-width:     360px;
+      background:    var(--glass-bg);
+      border:        1px solid rgba(218,54,51,0.2);
+      border-radius: var(--radius-md);
+      padding:       var(--space-xl) var(--space-lg);
+      text-align:    center;
+    }
+    .login-icon   { font-size:2.5rem; margin-bottom:var(--space-sm); }
+    .login-title  {
+      font-family:   var(--font-heading);
+      font-size:     1.1rem;
+      color:         var(--accent-red-br);
+      margin-bottom: 4px;
+      letter-spacing:2px;
+    }
+    .login-sub    { font-size:11px; color:var(--text-muted); margin-bottom:var(--space-lg); }
+    #admin-pass   {
+      text-align:     center;
+      letter-spacing: 4px;
+      font-size:      1rem;
+    }
+    #login-err {
+      display:     none;
+      color:       var(--accent-red-br);
+      font-size:   12px;
+      margin-top:  8px;
+    }
+
+    /* Dashboard layout */
+    #dashboard { padding: var(--space-md) 0 var(--space-xl); }
+
+    /* Section cards */
+    .admin-section {
+      background:    var(--glass-bg);
+      border:        1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-md);
+      overflow:      hidden;
+    }
+    .admin-section-header {
+      display:         flex;
+      align-items:     center;
+      justify-content: space-between;
+      padding:         14px 16px;
+      border-bottom:   1px solid var(--glass-border);
+      background:      rgba(255,255,255,0.02);
+    }
+    .admin-section-title {
+      font-family:   var(--font-heading);
+      font-size:     0.78rem;
+      color:         var(--text-primary);
+      letter-spacing:1px;
+    }
+    .admin-section-body { padding:var(--space-md); }
+
+    /* Stats grid */
+    .stats-grid {
+      display:               grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:                   var(--space-sm);
+      margin-bottom:         var(--space-md);
+    }
+    @media(min-width:600px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media(min-width:900px) {
+      .stats-grid { grid-template-columns: repeat(6, 1fr); }
+    }
+
+    /* Active storage bar */
+    .active-storage-wrap {
+      background:    var(--bg-tertiary);
+      border:        1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding:       14px 16px;
+    }
+    .active-storage-label {
+      display:         flex;
+      justify-content: space-between;
+      font-size:       11px;
+      color:           var(--text-muted);
+      margin-bottom:   8px;
+    }
+    .active-storage-id {
+      font-family: var(--font-heading);
+      font-size:   0.75rem;
+      color:       var(--accent-blue);
+    }
+
+    /* Scrollable table wrapper */
+    .table-wrap {
+      overflow-x: auto;
+      margin:     0 -var(--space-md);
+      padding:    0 var(--space-md);
+    }
+
+    /* Notify form */
+    .notify-form {
+      display:               grid;
+      grid-template-columns: 1fr auto;
+      gap:                   var(--space-sm);
+      align-items:           start;
+    }
+    @media(max-width:480px) {
+      .notify-form { grid-template-columns: 1fr; }
+    }
+
+    /* Add storage form */
+    .add-storage-grid {
+      display:               grid;
+      grid-template-columns: 1fr 1fr;
+      gap:                   var(--space-sm);
+      margin-bottom:         var(--space-sm);
+    }
+    @media(max-width:480px) {
+      .add-storage-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Stats refresh timestamp */
+    #stats-updated {
+      font-size:   10px;
+      color:       var(--text-muted);
+      text-align:  right;
+      margin-top:  var(--space-sm);
+    }
+
+    /* Shake animation for wrong password */
+    @keyframes shake {
+      0%,100% { transform:translateX(0); }
+      20%     { transform:translateX(-8px); }
+      40%     { transform:translateX(8px); }
+      60%     { transform:translateX(-5px); }
+      80%     { transform:translateX(5px); }
+    }
+
+    /* Quick links bar */
+    .quick-links {
+      display:   flex;
+      gap:       var(--space-sm);
+      flex-wrap: wrap;
+      padding:   var(--space-sm) 0 var(--space-md);
+    }
+
+    /* Telegram section */
+    .tg-info {
+      display:       flex;
+      align-items:   center;
+      gap:           8px;
+      background:    rgba(88,166,255,0.05);
+      border:        1px solid rgba(88,166,255,0.15);
+      border-radius: var(--radius-sm);
+      padding:       10px 14px;
+      margin-bottom: var(--space-md);
+      font-size:     12px;
+      color:         var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div class="login-screen" id="login-screen">
+  <div id="login-card">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">ADMIN PANEL</div>
+    <p class="login-sub">TOTKA 2.0 — Restricted Access</p>
+
+    <form id="admin-login-form" autocomplete="off" novalidate>
+      <div class="form-group">
+        <input class="form-input" type="password" id="admin-pass"
+          placeholder="••••••••"
+          autocomplete="new-password"
+          autofocus/>
+      </div>
+      <div id="login-err"></div>
+      <button type="submit" class="btn btn--danger btn--full" id="admin-login-btn"
+        style="margin-top:var(--space-sm)">
+        Enter
+      </button>
+    </form>
+
+    <p style="margin-top:var(--space-md);font-size:11px;color:var(--text-muted)">
+      <a href="index.html" style="color:var(--text-muted)">← Back to site</a>
+    </p>
+  </div>
+</div>
+
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<div class="hidden" id="dashboard">
+
+  <!-- Admin Top Bar -->
+  <div class="admin-topbar">
+    <div class="admin-topbar__logo">🔐 TOTKA ADMIN</div>
+    <span class="admin-badge">RESTRICTED</span>
+    <button class="btn btn--ghost btn--sm" id="refresh-btn"
+      onclick="ADMIN.refreshAll()">🔄 Refresh</button>
+    <button class="btn btn--ghost btn--sm"
+      onclick="ADMIN.adminLogout()"
+      style="color:var(--accent-red-br)">Logout</button>
+  </div>
+
+  <div class="page-container" style="max-width:900px">
+
+    <!-- Quick links -->
+    <div class="quick-links">
+      <a href="index.html"   target="_blank" class="btn btn--ghost btn--sm">🏠 Feed</a>
+      <a href="encode.html"  target="_blank" class="btn btn--ghost btn--sm">⬆️ Encode</a>
+      <a href="decode.html"  target="_blank" class="btn btn--ghost btn--sm">⬇️ Decode</a>
+      <a href="https://docs.google.com/spreadsheets/d/1TeLEbE8DR4I0bRaquyJthkLL4l2mOIwi2Oqnsw-LXu4"
+        target="_blank" class="btn btn--ghost btn--sm">📋 MASTER Sheet</a>
+      <a href="https://docs.google.com/spreadsheets/d/1f4aqXVSLD6GpV_9l62ZcpbT1H4xSucvzS6n9UKo7cJk"
+        target="_blank" class="btn btn--ghost btn--sm">👤 USERS Sheet</a>
+    </div>
+
+    <!-- ══════════ STATS ══════════ -->
+    <div class="admin-section">
+      <div class="admin-section-header">
+        <span class="admin-section-title">📊 Platform Statistics</span>
+        <span id="stats-updated" style="font-size:10px;color:var(--text-muted)">Loading...</span>
+      </div>
+      <div class="admin-section-body">
+        <div id="stats-error" style="color:var(--accent-red-br);font-size:12px;display:none"></div>
+
+        <!-- Stat cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card__num" id="stat-posts">—</div>
+            <div class="stat-card__label">Total Posts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__num" id="stat-users">—</div>
+            <div class="stat-card__label">Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__num" id="stat-24h"
+              style="color:var(--accent-green-br)">—</div>
+            <div class="stat-card__label">Posts 24h</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__num" id="stat-nsfw"
+              style="color:var(--accent-red-br)">—</div>
+            <div class="stat-card__label">NSFW Posts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__num" id="stat-sheets">—</div>
+            <div class="stat-card__label">Storage Sheets</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__num" id="stat-full-sheets"
+              style="color:var(--accent-gold)">—</div>
+            <div class="stat-card__label">Full Sheets</div>
+          </div>
+        </div>
+
+        <!-- Active storage bar -->
+        <div class="active-storage-wrap">
+          <div class="active-storage-label">
+            <span>Active Storage:
+              <span class="active-storage-id" id="active-sheet-id">—</span>
+            </span>
+            <span id="active-sheet-pct">—</span>
+          </div>
+          <div class="storage-bar-wrap" style="height:10px">
+            <div class="storage-bar-fill storage-bar-fill--ok"
+              id="active-storage-bar" style="width:0%"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:4px">
+            <span id="active-sheet-rows">— / —</span> rows used
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ STORAGE MANAGER ══════════ -->
+    <div class="admin-section">
+      <div class="admin-section-header">
+        <span class="admin-section-title">🗂️ Storage Sheets</span>
+      </div>
+      <div class="admin-section-body">
+
+        <!-- Storage table -->
+        <div class="table-wrap" style="margin-bottom:var(--space-md)">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Sheet ID</th>
+                <th>Usage</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody id="storage-list">
+              <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">
+                Loading...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Add new storage sheet -->
+        <div style="border-top:1px solid var(--glass-border);padding-top:var(--space-md)">
+          <div class="section-title" style="margin-bottom:var(--space-sm)">
+            ➕ Register New Storage Sheet
+          </div>
+          <div class="add-storage-grid">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="new-sheet-id">Sheet ID (e.g. sh_002)</label>
+              <input class="form-input" type="text" id="new-sheet-id"
+                placeholder="sh_002" autocomplete="off"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="new-sheet-name">Tab Name</label>
+              <input class="form-input" type="text" id="new-sheet-name"
+                placeholder="chunks" autocomplete="off"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-spreadsheet-id">
+              Google Spreadsheet ID (from URL)
+            </label>
+            <input class="form-input" type="text" id="new-spreadsheet-id"
+              placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+              autocomplete="off" spellcheck="false"/>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px">
+              From: docs.google.com/spreadsheets/d/<strong>[THIS PART]</strong>/edit
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="new-sheet-notes">Notes (optional)</label>
+            <input class="form-input" type="text" id="new-sheet-notes"
+              placeholder="Added Jan 2026" autocomplete="off"/>
+          </div>
+          <button class="btn btn--primary btn--full" id="add-storage-btn"
+            onclick="ADMIN.addStorage()">
+            ➕ Add Storage Sheet
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ RECENT POSTS ══════════ -->
+    <div class="admin-section">
+      <div class="admin-section-header">
+        <span class="admin-section-title">📁 Recent Posts</span>
+        <span style="font-size:10px;color:var(--text-muted)">Last 15</span>
+      </div>
+      <div class="admin-section-body">
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Post ID</th>
+                <th>Title</th>
+                <th>User</th>
+                <th>Time</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recent-posts-list">
+              <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">
+                Loading...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ RECENT USERS ══════════ -->
+    <div class="admin-section">
+      <div class="admin-section-header">
+        <span class="admin-section-title">👥 Recent Users</span>
+        <span style="font-size:10px;color:var(--text-muted)">Last 15</span>
+      </div>
+      <div class="admin-section-body">
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>Joined</th>
+                <th>View</th>
+              </tr>
+            </thead>
+            <tbody id="recent-users-list">
+              <tr><td colspan="4" style="text-align:center;color:var(--text-muted)">
+                Loading...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ TELEGRAM NOTIFICATIONS ══════════ -->
+    <div class="admin-section">
+      <div class="admin-section-header">
+        <span class="admin-section-title">📢 Send Telegram Notification</span>
+      </div>
+      <div class="admin-section-body">
+
+        <!-- Bot info -->
+        <div class="tg-info">
+          <span>🤖</span>
+          <span>
+            Bot: <a href="https://t.me/TOTKA_Admin_bot" target="_blank"
+              style="color:var(--accent-blue)">@TOTKA_Admin_bot</a>
+            · Admin Chat ID: <code class="code-inline">7929275539</code>
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="notify-target">
+            Target (User ID or "all")
+          </label>
+          <input class="form-input" type="text" id="notify-target"
+            placeholder="all / ur00001" value="all" autocomplete="off"/>
+        </div>
+
+        <div class="notify-form">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="notify-message">Message</label>
+            <textarea class="form-input" id="notify-message" rows="3"
+              placeholder="Type your admin message here..."></textarea>
+          </div>
+          <div style="padding-top:22px">
+            <button class="btn btn--primary" id="send-notify-btn"
+              onclick="ADMIN.sendNotification()">
+              📢 Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ SYSTEM INFO ══════════ -->
+    <div class="admin-section">
+      <div class="admin-section-header">
+        <span class="admin-section-title">⚙️ System Info</span>
+      </div>
+      <div class="admin-section-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+          ${[
+            ["TOTKA Version",   "2.0"],
+            ["POOL Size",       "86 characters"],
+            ["CHUNK_BITS",      "18-bit"],
+            ["Chunk Size",      "45,000 chars/cell"],
+            ["Max Storage",     "500,000 rows/sheet"],
+            ["Max File",        "500 MB"],
+            ["Max Pic",         "50 KB"],
+            ["Encoding",        "zlib + 18-bit + Unicode PUA"],
+          ].map(([k,v]) => `
+            <div style="background:var(--bg-tertiary);border:1px solid var(--glass-border);
+              border-radius:var(--radius-sm);padding:10px 12px">
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;
+                letter-spacing:.5px;margin-bottom:3px">${k}</div>
+              <div style="font-weight:700;color:var(--text-primary)">${v}</div>
+            </div>
+          `).join("")}
+        </div>
+
+        <!-- GAS URLs reference -->
+        <div style="margin-top:var(--space-md)">
+          <div class="section-title" style="margin-bottom:var(--space-sm)">GAS Service URLs</div>
+          <div id="gas-urls-list"
+            style="font-size:11px;display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- end page-container -->
+
+</div>
+<!-- end dashboard -->
+
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+
+<script>
+// Populate GAS URLs list in system info after page load
+document.addEventListener("DOMContentLoaded", () => {
+  const wrap = document.getElementById("gas-urls-list");
+  if (!wrap) return;
+
+  const services = [
+    ["GAS 1 Auth",     TOTKA.GAS_AUTH],
+    ["GAS 2 Registry", TOTKA.GAS_REG],
+    ["GAS 3 Write",    TOTKA.GAS_WRITE],
+    ["GAS 4 Feed",     TOTKA.GAS_FEED],
+    ["GAS 5 Decode",   TOTKA.GAS_DECODE],
+    ["GAS 6 Notify",   TOTKA.GAS_NOTIFY],
+  ];
+
+  wrap.innerHTML = services.map(([label, url]) => `
+    <div style="display:flex;align-items:center;gap:8px;
+      background:var(--bg-tertiary);border:1px solid var(--glass-border);
+      border-radius:var(--radius-sm);padding:8px 12px">
+      <span style="color:var(--text-muted);min-width:90px;font-size:10px;
+        text-transform:uppercase;letter-spacing:.5px">${label}</span>
+      <span style="color:${url.includes("PASTE") ? "var(--accent-red-br)" : "var(--accent-green-br)"};
+        word-break:break-all;font-size:10px;flex:1">
+        ${url.includes("PASTE") ? "⚠️ Not configured" : "✅ " + url.slice(0,60) + "..."}
+      </span>
+      ${!url.includes("PASTE") ? `
+      <a href="${url}" target="_blank"
+        class="btn btn--ghost btn--sm" style="font-size:9px;flex-shrink:0">
+        Test
+      </a>` : ""}
+    </div>
+  `).join("");
+});
+</script>
+
+</body>
+</html>

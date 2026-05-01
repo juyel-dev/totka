@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Encode File — TOTKA</title>
+  <meta name="description" content="Upload any file and encode it into shareable text with TOTKA."/>
+  <meta name="theme-color" content="#0d1117"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/app.css"/>
+
+  <style>
+    /* ── PAGE-SPECIFIC ───────────────────────────────────── */
+    .encode-header {
+      padding:       var(--space-lg) 0 var(--space-md);
+      text-align:    center;
+    }
+    .encode-header h1 {
+      font-size:     1.3rem;
+      color:         var(--accent-blue);
+      margin-bottom: 4px;
+    }
+    .encode-header p {
+      font-size: 12px;
+      color:     var(--text-muted);
+    }
+
+    /* Stage wrappers */
+    .stage { animation: fadeIn 0.25s ease; }
+
+    /* File info preview row */
+    .file-info-row {
+      display:       flex;
+      align-items:   center;
+      gap:           var(--space-md);
+      background:    rgba(88,166,255,0.06);
+      border:        1px solid rgba(88,166,255,0.18);
+      border-radius: var(--radius-md);
+      padding:       14px 16px;
+      margin-bottom: var(--space-md);
+    }
+    .file-info-row__icon { font-size:2rem; flex-shrink:0; }
+    .file-info-row__name {
+      font-size:   14px;
+      font-weight: 700;
+      color:       var(--text-primary);
+      word-break:  break-all;
+    }
+    .file-info-row__size { font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+    /* Section dividers inside form */
+    .form-section {
+      margin-bottom: var(--space-lg);
+    }
+    .form-section-title {
+      font-size:     10px;
+      color:         var(--accent-blue);
+      text-transform:uppercase;
+      letter-spacing:2px;
+      padding-bottom:6px;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: var(--space-md);
+    }
+
+    /* Char counter */
+    .input-wrap { position:relative; }
+    .char-count {
+      position:   absolute;
+      right:      10px;
+      bottom:     10px;
+      font-size:  10px;
+      color:      var(--text-muted);
+      pointer-events:none;
+    }
+    .input-wrap textarea { padding-bottom:24px; }
+
+    /* NSFW toggle row */
+    .nsfw-row {
+      display:     flex;
+      align-items: center;
+      gap:         12px;
+      padding:     12px 0;
+    }
+    #nsfw-label {
+      font-size: 13px;
+      color:     var(--text-muted);
+      cursor:    pointer;
+      flex:      1;
+    }
+
+    /* Tag hint */
+    .tag-hint {
+      font-size:  11px;
+      color:      var(--text-muted);
+      margin-top: 4px;
+    }
+    #tag-count { margin-left:4px; }
+
+    /* Done stage */
+    .done-card {
+      background:    rgba(35,134,54,0.06);
+      border:        1px solid rgba(35,134,54,0.25);
+      border-radius: var(--radius-md);
+      padding:       var(--space-lg);
+      text-align:    center;
+      margin-bottom: var(--space-md);
+    }
+    .done-icon   { font-size:3rem; margin-bottom:var(--space-sm); }
+    .done-title  {
+      font-family:   var(--font-heading);
+      font-size:     1.1rem;
+      color:         var(--accent-green-br);
+      margin-bottom: var(--space-sm);
+    }
+
+    .done-meta-grid {
+      display:               grid;
+      grid-template-columns: 1fr 1fr;
+      gap:                   8px;
+      margin:                var(--space-md) 0;
+      text-align:            left;
+    }
+    .done-meta-item {
+      background:    var(--bg-tertiary);
+      border:        1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding:       10px 12px;
+    }
+    .done-meta-item__label {
+      font-size:     10px;
+      color:         var(--text-muted);
+      text-transform:uppercase;
+      letter-spacing:0.5px;
+      margin-bottom: 4px;
+    }
+    .done-meta-item__val {
+      font-size:   13px;
+      font-weight: 700;
+      color:       var(--text-primary);
+      word-break:  break-all;
+    }
+
+    /* Big Post ID display */
+    .done-post-id {
+      font-family:   var(--font-heading);
+      font-size:     2rem;
+      font-weight:   900;
+      color:         var(--accent-blue);
+      letter-spacing:4px;
+      text-shadow:   0 0 20px rgba(88,166,255,0.4);
+      padding:       var(--space-md);
+      background:    rgba(88,166,255,0.06);
+      border:        1px solid rgba(88,166,255,0.2);
+      border-radius: var(--radius-md);
+      cursor:        pointer;
+      transition:    var(--transition);
+      user-select:   all;
+    }
+    .done-post-id:hover {
+      background: rgba(88,166,255,0.1);
+      box-shadow: var(--glow-blue-strong);
+    }
+
+    /* Action buttons row */
+    .done-actions {
+      display:       grid;
+      grid-template-columns:1fr 1fr;
+      gap:           var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    /* Next button on pick stage */
+    #btn-next {
+      margin-top: var(--space-md);
+      width:      100%;
+    }
+
+    /* Scrollbar for page */
+    body { overflow-y:auto; }
+
+    @media (max-width:480px) {
+      .done-meta-grid { grid-template-columns: 1fr; }
+      .done-post-id   { font-size:1.5rem; letter-spacing:2px; }
+      .done-actions   { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ TOP NAV ══════════════ -->
+<nav class="top-nav">
+  <a href="index.html" class="top-nav__logo">TOTKA</a>
+  <div style="flex:1"></div>
+  <div class="top-nav__actions">
+    <a href="index.html" class="nav-icon-btn" title="Home">🏠</a>
+    <a href="profile.html" class="nav-avatar" id="nav-profile-link"
+       title="Profile">?</a>
+  </div>
+</nav>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="page-container">
+
+  <div class="encode-header">
+    <h1>⬆️ Encode &amp; Share</h1>
+    <p>Upload any file → convert to text → share anywhere</p>
+  </div>
+
+  <!-- ═══════ STAGE: PICK FILE ═══════ -->
+  <div class="stage" id="stage-pick">
+
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input"/>
+      <div class="drop-zone__icon">📂</div>
+      <div class="drop-zone__text">Tap to select a file</div>
+      <div class="drop-zone__hint">or drag &amp; drop here</div>
+      <div class="drop-zone__hint" style="margin-top:4px">
+        Any format · Max 500 MB
+      </div>
+    </div>
+
+    <button class="btn btn--primary btn--full hidden" id="btn-next">
+      Next — Add Details →
+    </button>
+
+  </div>
+  <!-- end stage-pick -->
+
+
+  <!-- ═══════ STAGE: METADATA FORM ═══════ -->
+  <div class="stage hidden" id="stage-info">
+
+    <!-- File preview row -->
+    <div class="file-info-row" id="file-info-row">
+      <div class="file-info-row__icon">📄</div>
+      <div>
+        <div class="file-info-row__name" id="info-filename">—</div>
+        <div class="file-info-row__size" id="info-filesize">—</div>
+      </div>
+    </div>
+
+    <form id="meta-form" novalidate autocomplete="off">
+
+      <!-- Required -->
+      <div class="form-section">
+        <div class="form-section-title">📌 Post Details</div>
+
+        <div class="form-group">
+          <label class="form-label" for="meta-title">
+            Title <span>*</span>
+          </label>
+          <div class="input-wrap">
+            <input class="form-input" type="text" id="meta-title"
+              placeholder="What is this file?"
+              maxlength="100" autocomplete="off"/>
+            <span class="char-count" id="title-count">0/100</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="meta-tags">Tags</label>
+          <input class="form-input" type="text" id="meta-tags"
+            placeholder="photo, nature, travel (max 5, comma-separated)"
+            autocomplete="off" autocapitalize="none"/>
+          <div class="tag-hint">
+            Separate with commas · <span id="tag-count">0/5 tags</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="meta-desc">Description</label>
+          <div class="input-wrap">
+            <textarea class="form-input" id="meta-desc" rows="3"
+              placeholder="Describe what's inside this file (optional)"
+              maxlength="500"></textarea>
+            <span class="char-count" id="desc-count">0/500</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="meta-alt">Alt Text</label>
+          <div class="input-wrap">
+            <input class="form-input" type="text" id="meta-alt"
+              placeholder="Accessibility description (optional)"
+              maxlength="200"/>
+            <span class="char-count" id="alt-count">0/200</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- NSFW toggle -->
+      <div class="form-section">
+        <div class="form-section-title">⚙️ Settings</div>
+        <div class="nsfw-row">
+          <div class="toggle" id="nsfw-toggle" title="Mark as NSFW"></div>
+          <span id="nsfw-label">Mark as NSFW (18+)</span>
+        </div>
+      </div>
+
+      <!-- Progress bar (hidden until encoding starts) -->
+      <div id="progress-container"></div>
+
+      <!-- Buttons -->
+      <div style="display:flex;gap:var(--space-sm)">
+        <button type="button" class="btn btn--ghost" id="btn-back"
+          style="flex:0 0 auto;padding:10px 16px">← Back</button>
+        <button type="submit" class="btn btn--primary btn--full" id="btn-submit">
+          🚀 Encode &amp; Publish
+        </button>
+      </div>
+
+      <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:12px">
+        Large files may take a minute. Keep this page open.
+      </p>
+
+    </form>
+  </div>
+  <!-- end stage-info -->
+
+
+  <!-- ═══════ STAGE: DONE ═══════ -->
+  <div class="stage hidden" id="stage-done">
+
+    <div class="done-card">
+      <div class="done-icon">🎉</div>
+      <div class="done-title">Published Successfully!</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:var(--space-md)">
+        Your file is now live. Share the Post ID below.
+      </p>
+
+      <!-- Big Post ID -->
+      <div class="done-post-id" id="done-post-id"
+        onclick="copyToClipboard(this.textContent.trim(),'Post ID copied!')">
+        im00000
+      </div>
+      <p style="font-size:10px;color:var(--text-muted);margin-top:6px">
+        Tap to copy Post ID
+      </p>
+    </div>
+
+    <!-- Title & tags -->
+    <div style="margin-bottom:var(--space-md)">
+      <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:6px"
+        id="done-title-display"></div>
+      <div class="card-tags" id="done-tags"></div>
+    </div>
+
+    <!-- Meta grid -->
+    <div class="done-meta-grid">
+      <div class="done-meta-item">
+        <div class="done-meta-item__label">Original Size</div>
+        <div class="done-meta-item__val" id="done-size">—</div>
+      </div>
+      <div class="done-meta-item">
+        <div class="done-meta-item__label">Encoded Length</div>
+        <div class="done-meta-item__val" id="done-encoded-len">—</div>
+      </div>
+      <div class="done-meta-item">
+        <div class="done-meta-item__label">Chunks</div>
+        <div class="done-meta-item__val" id="done-chunks">—</div>
+      </div>
+      <div class="done-meta-item">
+        <div class="done-meta-item__label">Storage</div>
+        <div class="done-meta-item__val" id="done-storage">—</div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="done-actions">
+      <button class="btn btn--primary" id="btn-copy-id">
+        📋 Copy Post ID
+      </button>
+      <button class="btn btn--ghost" id="btn-share-post">
+        🔗 Share
+      </button>
+    </div>
+    <div class="done-actions">
+      <button class="btn btn--success" id="btn-go-feed">
+        🏠 View Feed
+      </button>
+      <button class="btn btn--ghost" id="btn-encode-another">
+        ⬆️ Encode Another
+      </button>
+    </div>
+
+    <!-- Decode CTA -->
+    <div style="text-align:center;margin-top:var(--space-md)">
+      <a href="#" id="decode-link" class="btn btn--ghost btn--full"
+        style="font-size:12px">
+        🔓 Go to Decode page
+      </a>
+    </div>
+
+  </div>
+  <!-- end stage-done -->
+
+</main>
+
+<!-- ══════════════ BOTTOM NAV ══════════════ -->
+<nav class="bottom-nav">
+  <a href="index.html"   class="nav-item">
+    <span class="nav-item__icon">🏠</span>
+    <span class="nav-item__label">Home</span>
+  </a>
+  <a href="encode.html"  class="nav-item nav-item--active">
+    <span class="nav-item__icon">⬆️</span>
+    <span class="nav-item__label">Encode</span>
+  </a>
+  <a href="decode.html"  class="nav-item">
+    <span class="nav-item__icon">⬇️</span>
+    <span class="nav-item__label">Decode</span>
+  </a>
+  <a href="profile.html" class="nav-item">
+    <span class="nav-item__icon">👤</span>
+    <span class="nav-item__label">Profile</span>
+  </a>
+</nav>
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/image.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/encode.js"></script>
+
+<script>
+  // Sync file info to stage-info header after selection
+  document.addEventListener("DOMContentLoaded", () => {
+    const observer = new MutationObserver(() => {
+      const dropZone = document.getElementById("drop-zone");
+      const nameTxt  = dropZone?.querySelector(".drop-zone__text")?.textContent || "";
+      const sizeTxt  = dropZone?.querySelector(".drop-zone__hint")?.textContent || "";
+      if (nameTxt && nameTxt !== "Tap to select a file") {
+        const fnEl = document.getElementById("info-filename");
+        const fsEl = document.getElementById("info-filesize");
+        if (fnEl) fnEl.textContent = nameTxt;
+        if (fsEl) fsEl.textContent = sizeTxt;
+      }
+    });
+    const zone = document.getElementById("drop-zone");
+    if (zone) observer.observe(zone, { childList:true, subtree:true });
+
+    // Set decode link after postId is available
+    document.getElementById("stage-done")?.addEventListener("click", () => {
+      const id  = document.getElementById("done-post-id")?.textContent.trim();
+      const lnk = document.getElementById("decode-link");
+      if (id && lnk) lnk.href = `decode.html?id=${id}`;
+    });
+
+    // Nav profile
+    const navPic = document.getElementById("nav-profile-link");
+    if (navPic && SESSION.isLoggedIn()) {
+      const pic = SESSION.getPic();
+      navPic.href = "profile.html";
+      if (pic) {
+        navPic.style.backgroundImage = `url(${pic})`;
+        navPic.style.backgroundSize  = "cover";
+        navPic.textContent           = "";
+      } else {
+        navPic.textContent = (SESSION.getName()||SESSION.getUsername()||"?").charAt(0).toUpperCase();
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
