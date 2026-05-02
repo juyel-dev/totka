@@ -1,5 +1,5 @@
 // ============================================================
-// js/decode.js — TOTKA 2.0
+// js/decode.js — TOTKA 2.0 (updated for embedded metadata)
 // Fetch encoded chunks → decode → trigger file download
 // Requires: config.js, api.js, engine.js, progress.js
 // ============================================================
@@ -18,16 +18,13 @@ const DECODE_PAGE = (() => {
     _bindForm();
     _bindRecentList();
 
-    // Auto-decode if ?id= in URL
     const param = new URLSearchParams(window.location.search).get("id");
     if (param) {
       const input = document.getElementById("post-id-input");
       if (input) input.value = param.trim().toLowerCase();
-      // Small delay so progress bar has time to render
       setTimeout(() => startDecode(param.trim()), 300);
     }
 
-    // Nav profile avatar
     _updateNav();
   }
 
@@ -39,7 +36,6 @@ const DECODE_PAGE = (() => {
 
     if (!form) return;
 
-    // Live format hint
     input?.addEventListener("input", () => {
       const val  = input.value.trim().toLowerCase();
       const hint = document.getElementById("id-hint");
@@ -61,7 +57,6 @@ const DECODE_PAGE = (() => {
       }
     });
 
-    // Paste button
     document.getElementById("paste-btn")?.addEventListener("click", async () => {
       try {
         const text = await navigator.clipboard.readText();
@@ -76,7 +71,6 @@ const DECODE_PAGE = (() => {
       }
     });
 
-    // Form submit
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const id = input?.value.trim().toLowerCase();
@@ -96,7 +90,6 @@ const DECODE_PAGE = (() => {
     postId = postId.trim().toLowerCase();
     if (!postId) { showToast("Enter a Post ID", "warning"); return; }
 
-    // Basic format check
     if (!/^im\d{1,}$/.test(postId)) {
       _showError(`"${postId}" doesn't look like a valid Post ID. Format: im00042`);
       return;
@@ -112,7 +105,7 @@ const DECODE_PAGE = (() => {
     _progress.show("Connecting...", ["Fetch Meta", "Fetch Chunks", "Decode", "Download"]);
 
     try {
-      // ── Step 1: Fetch post metadata for display ─────────────
+      // Step 1: Fetch post metadata for display
       _progress.update(8, "Fetching post info...", postId);
       const meta = await API.FEED.getPostMeta(postId);
 
@@ -123,10 +116,9 @@ const DECODE_PAGE = (() => {
       }
       _progress.completeStep(0);
 
-      // Show post info card while loading
       _showPostInfo(meta);
 
-      // ── Step 2: Fetch encoded chunks from GAS 5 ─────────────
+      // Step 2: Fetch encoded chunks
       _progress.update(18, "Fetching encoded data...",
         `${meta.totalChunks} chunk${meta.totalChunks!==1?"s":""}`);
 
@@ -149,14 +141,12 @@ const DECODE_PAGE = (() => {
       const encoded    = data.encoded;
       const totalChars = encoded.length;
 
-      // ── Step 3: Decode bits → original bytes ────────────────
+      // Step 3: Decode (returns { bytes, meta })
       _progress.update(35, "Decoding bits...", `${totalChars.toLocaleString()} chars`);
 
-      // Run decode — this is CPU-heavy but usually fast enough for main thread
-      // (Web Worker for decode would need the full engine.js imported there too)
-      let originalBytes;
+      let decodedResult;
       try {
-        originalBytes = TOTKA_ENGINE.decode(encoded, (pct, status, detail) => {
+        decodedResult = TOTKA_ENGINE.decode(encoded, (pct, status, detail) => {
           _progress.update(35 + Math.floor(pct * 0.55), status, detail);
         });
       } catch (decodeErr) {
@@ -164,17 +154,20 @@ const DECODE_PAGE = (() => {
       }
       _progress.completeStep(2);
 
-      const fileName   = _guessFileName(meta.title, meta.alt);
-      const fileType   = _guessFileType(fileName);
-      const sizeStr    = formatSize(originalBytes.length);
+      const originalBytes = decodedResult.bytes;
+      const fileMeta      = decodedResult.meta;   // null if old (no header)
 
-      // ── Step 4: Trigger browser download ────────────────────
+      // Use embedded metadata if present, otherwise fallback to guess
+      const fileName = fileMeta ? fileMeta.fileName : _guessFileName(meta.title, meta.alt);
+      const fileType = fileMeta ? fileMeta.mimeType : _guessFileType(fileName);
+      const sizeStr  = formatSize(originalBytes.length);
+
+      // Step 4: Trigger browser download
       _progress.update(96, "Preparing download...", sizeStr);
       await _triggerDownload(originalBytes, fileName, fileType);
       _progress.completeStep(3);
       _progress.success(`Downloaded! (${sizeStr})`, fileName);
 
-      // Show success result card
       _showResult({
         postId, fileName, fileType,
         originalSize: sizeStr,
@@ -182,7 +175,6 @@ const DECODE_PAGE = (() => {
         chunks:       meta.totalChunks,
       });
 
-      // Save to recent list
       _addToRecent({ postId, title: meta.title, size: sizeStr, ts: Date.now() });
 
     } catch (err) {
@@ -205,19 +197,15 @@ const DECODE_PAGE = (() => {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    // Release after 10s
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
-  // ── GUESS FILENAME ─────────────────────────────────────────────
-  // Try to extract a filename from title or alt text
+  // ── GUESS FILENAME (fallback) ─────────────────────────────────
   function _guessFileName(title, alt) {
     const candidates = [alt, title].filter(Boolean);
     for (const c of candidates) {
-      // If it already has an extension, use it
       if (/\.\w{1,5}$/.test(c)) return c.trim();
     }
-    // Strip special chars from title → use as filename
     const safe = (title || "totka_file")
       .replace(/[^a-zA-Z0-9\-_. ]/g, "_")
       .replace(/\s+/g, "_")
@@ -226,21 +214,17 @@ const DECODE_PAGE = (() => {
     return safe || "totka_file";
   }
 
-  // ── GUESS MIME TYPE ───────────────────────────────────────────
+  // ── GUESS MIME TYPE (fallback) ────────────────────────────────
   function _guessFileType(fileName) {
     const ext = (fileName.split(".").pop() || "").toLowerCase();
     const map  = {
-      // Images
       jpg:"image/jpeg", jpeg:"image/jpeg", png:"image/png",
       gif:"image/gif",  webp:"image/webp", svg:"image/svg+xml",
       bmp:"image/bmp",  ico:"image/x-icon",
-      // Video
       mp4:"video/mp4",  mkv:"video/x-matroska", avi:"video/x-msvideo",
       mov:"video/quicktime", webm:"video/webm", flv:"video/x-flv",
-      // Audio
       mp3:"audio/mpeg", wav:"audio/wav",  ogg:"audio/ogg",
       flac:"audio/flac",m4a:"audio/mp4",  aac:"audio/aac",
-      // Docs
       pdf:"application/pdf",
       doc:"application/msword",
       docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -251,15 +235,11 @@ const DECODE_PAGE = (() => {
       txt:"text/plain", csv:"text/csv", json:"application/json",
       xml:"application/xml", html:"text/html", css:"text/css",
       js:"application/javascript",
-      // Archives
       zip:"application/zip", rar:"application/vnd.rar",
       "7z":"application/x-7z-compressed", tar:"application/x-tar",
       gz:"application/gzip",
-      // Apps
       apk:"application/vnd.android.package-archive",
-      exe:"application/x-msdownload",
-      dmg:"application/x-apple-diskimage",
-      // Other
+      exe:"application/x-msdownload", dmg:"application/x-apple-diskimage",
       ttf:"font/ttf", woff:"font/woff", woff2:"font/woff2",
       py:"text/x-python", java:"text/x-java-source",
     };
@@ -352,7 +332,7 @@ const DECODE_PAGE = (() => {
     if (_lastPostId) startDecode(_lastPostId);
   }
 
-  // ── SHOW / HIDE ERROR ─────────────────────────────────────────
+  // ── ERROR UI ──────────────────────────────────────────────────
   function _showError(msg) {
     const el = document.getElementById("error-box");
     if (!el) return;
@@ -395,7 +375,6 @@ const DECODE_PAGE = (() => {
   function _addToRecent(item) {
     try {
       let list = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
-      // Remove duplicate
       list = list.filter(r => r.postId !== item.postId);
       list.unshift(item);
       list = list.slice(0, RECENT_MAX);
@@ -415,7 +394,6 @@ const DECODE_PAGE = (() => {
     const wrap = document.getElementById("recent-wrap");
     const sect = document.getElementById("recent-section");
     if (!wrap || !list.length) return;
-
     if (sect) sect.style.display = "block";
 
     wrap.innerHTML = list.map(item => `
