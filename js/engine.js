@@ -1,37 +1,34 @@
 // ============================================================
 // js/engine.js — TOTKA 3.0 : 16‑BIT BMP + EMBEDDED METADATA
-// Only uses BMP characters (safe in GAS/JSON).
-// Encoded string starts with magic "TOTK" + metadata JSON,
-// then null char + actual bit-encoded data. No GAS changes!
+// Only BMP characters (U+0000–U+FFFF) – safe in GAS/JSON.
+// Metadata (filename, mime type) is embedded in the string.
 // Requires: pako.min.js (loaded before this file)
 // ============================================================
 
 const TOTKA_ENGINE = (() => {
 
   const CHUNK_BITS = 16;
-  const MASK = (1 << CHUNK_BITS) - 1; // 0xFFFF
+  const MASK = (1 << CHUNK_BITS) - 1; // = 0xFFFF
 
-  // Magic signature: 4 chars + JSON metadata + null char
+  // Magic signature: 4 chars + compact JSON + null byte
   const MAGIC = "TOTK";
   const NULL_CHAR = "\x00";
 
-  // ── ENCODE (raw bytes → BMP string) ──────────────────────
+  // ── ENCODE (raw bytes → BMP string, no metadata) ──────────
   function encode(uint8Array, onProgress) {
-    // No metadata — just pure bit-encode (backward compatible)
     return _encodeBits(uint8Array, onProgress);
   }
 
-  // ── ENCODE WITH METADATA (file name, mime type) ──────────
+  // ── ENCODE WITH METADATA (recommended for files) ──────────
   function encodeWithMeta(uint8Array, meta, onProgress) {
     if (!meta || !meta.fileName) {
-      // fallback to bare encode if no metadata provided
       return encode(uint8Array, onProgress);
     }
-    // Build metadata object (short keys for compactness)
+    // Compact header
     const m = {
       n: meta.fileName,
       t: meta.mimeType || "application/octet-stream",
-      s: meta.originalSize || "" // optional, only for info
+      s: meta.originalSize || ""   // optional, for display
     };
     const header = MAGIC + JSON.stringify(m) + NULL_CHAR;
     if (onProgress) onProgress(0, 'Building header…', '');
@@ -41,7 +38,7 @@ const TOTKA_ENGINE = (() => {
     return result;
   }
 
-  // ── CORE BIT ENCODING (shared) ───────────────────────────
+  // ── CORE BIT ENCODING (shared) ────────────────────────────
   function _encodeBits(uint8Array, onProgress) {
     if (!(uint8Array instanceof Uint8Array)) {
       throw new Error("encode() requires a Uint8Array");
@@ -82,15 +79,16 @@ const TOTKA_ENGINE = (() => {
     return result;
   }
 
-  // ── DECODE (string → { bytes, meta } OR just bytes) ──────
+  // ── DECODE (string → { bytes, meta } ) ────────────────────
   function decode(encodedText, onProgress) {
     if (typeof encodedText !== 'string') {
       throw new Error('decode() requires a string');
     }
 
-    // Check if header present
     let body = encodedText;
     let meta = null;
+
+    // Check for TOTK header
     if (encodedText.startsWith(MAGIC)) {
       const idx = encodedText.indexOf(NULL_CHAR, MAGIC.length);
       if (idx !== -1) {
@@ -103,28 +101,27 @@ const TOTKA_ENGINE = (() => {
             originalSize: m.s
           };
         } catch (_) {
-          // corrupt header? ignore and try to decode entire string
+          // corrupt header – fallback to bare decode
           meta = null;
         }
         body = encodedText.substring(idx + 1);
       }
     }
 
-    // Decode BMP body
     const bytes = _decodeBits(body, onProgress);
-    return { bytes, meta };  // always return object; meta may be null
+    return { bytes, meta };
   }
 
   // ── CORE BIT DECODING ───────────────────────────────────
-  function _decodeBits(encodedText, onProgress) {
-    const totalChars = encodedText.length;
+  function _decodeBits(encodedPart, onProgress) {
+    const totalChars = encodedPart.length;
     const bytesArr = [];
 
     let buf = 0;
     let bits = 0;
 
     for (let i = 0; i < totalChars; i++) {
-      const val = encodedText.charCodeAt(i); // 0–65535
+      const val = encodedPart.charCodeAt(i); // 0–65535
       buf = (buf << 16) | val;
       bits += 16;
 
@@ -150,7 +147,7 @@ const TOTKA_ENGINE = (() => {
     return original;
   }
 
-  // ── HELPER: shift progress callback numbers ────────────
+  // ── HELPERS ──────────────────────────────────────────────
   function _shiftProgress(baseCallback, offset, scaleTo) {
     return (pct, status, detail) => {
       const newPct = offset + Math.floor((pct / 100) * (scaleTo - offset));
@@ -158,7 +155,14 @@ const TOTKA_ENGINE = (() => {
     };
   }
 
-  // ── CONVENIENCE: encodeFile (with metadata) ─────────────
+  function formatSize(bytes) {
+    if (!bytes) return '0 B';
+    const u = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + u[i];
+  }
+
+  // ── CONVENIENCE WRAPPERS ────────────────────────────────
   async function encodeFile(file, onProgress) {
     if (onProgress) onProgress(5, 'Reading…', formatSize(file.size));
     const buf = await file.arrayBuffer();
@@ -181,7 +185,6 @@ const TOTKA_ENGINE = (() => {
     };
   }
 
-  // ── CONVENIENCE: decode and download ───────────────────
   function decodeAndDownload(encodedText, onProgress) {
     const { bytes, meta } = decode(encodedText, onProgress);
     const fileName = meta ? meta.fileName : 'totka_decoded_file';
@@ -195,16 +198,9 @@ const TOTKA_ENGINE = (() => {
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 5000);
-    return {
-      success: true,
-      size: bytes.length,
-      sizeFmt: formatSize(bytes.length),
-      fileName,
-      mimeType
-    };
+    return { success: true, size: bytes.length, sizeFmt: formatSize(bytes.length), fileName, mimeType };
   }
 
-  // ── VERIFY ROUND-TRIP ──────────────────────────────────
   async function verify(file) {
     const buf = new Uint8Array(await file.arrayBuffer());
     const encoded = encodeWithMeta(buf, {
@@ -212,34 +208,25 @@ const TOTKA_ENGINE = (() => {
       mimeType: file.type || 'app/octet-stream'
     });
     const { bytes, meta } = decode(encoded);
-    const match = buf.length === bytes.length &&
-                  buf.every((v, i) => v === bytes[i]);
-    console.log(`TOTKA 3.0 verify: ${match ? '✅ PASS' : '❌ FAIL'}`);
-    console.log(`Metadata: ${meta ? meta.fileName : 'none'}`);
+    const match = buf.length === bytes.length && buf.every((v, i) => v === bytes[i]);
+    console.log(`TOTKA 3.0 verify: ${match ? '✅ PASS' : '❌ FAIL'}, Metadata: ${meta?.fileName || 'none'}`);
     return { match, originalLen: buf.length, encodedLen: encoded.length, decodedLen: bytes.length, meta };
-  }
-
-  function formatSize(bytes) {
-    if (!bytes) return '0 B';
-    const u = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + u[i];
   }
 
   return {
     encode,
     encodeWithMeta,
-    decode,            // returns { bytes, meta }
+    decode,
     encodeFile,
     decodeAndDownload,
     verify,
     CHUNK_BITS,
-    MAGIC              // exposed for testing
+    MAGIC
   };
 
 })();
 
-// ── WEB WORKER (16‑bit, no metadata — metadata added in main thread) ──
+// ── WEB WORKER (returns bare BMP body, no header) ──────────
 const TOTKA_WORKER = {
   create() {
     const workerSrc = `
