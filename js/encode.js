@@ -1,6 +1,6 @@
 // ============================================================
-// js/encode.js — TOTKA 2.0
-// File upload → encode → metadata form → save post
+// js/encode.js — TOTKA 2.0 (updated for header embedding)
+// File upload → encode (with metadata) → metadata form → save post
 // Requires: config.js, api.js, engine.js, image.js, progress.js
 // ============================================================
 
@@ -8,7 +8,7 @@ const ENCODE_PAGE = (() => {
 
   // ── STATE ────────────────────────────────────────────────────
   let _file         = null;   // selected File object
-  let _encoded      = "";     // result of TOTKA_ENGINE.encode()
+  let _encoded      = "";     // result (with embedded metadata)
   let _originalSize = 0;
   let _originalFmt  = "";
   let _worker       = null;   // Web Worker (large files)
@@ -18,7 +18,6 @@ const ENCODE_PAGE = (() => {
 
   // ── INIT ─────────────────────────────────────────────────────
   function init() {
-    // Must be logged in to encode
     if (!requireLogin("login.html?next=encode.html")) return;
 
     _progress = new TotkaProgress("progress-container");
@@ -32,7 +31,6 @@ const ENCODE_PAGE = (() => {
   }
 
   // ── STAGE MANAGER ────────────────────────────────────────────
-  // Stages: pick → info → encoding → done
   function _showStage(stage) {
     ["stage-pick", "stage-info", "stage-done"].forEach(id => {
       const el = document.getElementById(id);
@@ -48,15 +46,12 @@ const ENCODE_PAGE = (() => {
     const input = document.getElementById("file-input");
     if (!zone || !input) return;
 
-    // Click on zone → open file picker
     zone.addEventListener("click", () => input.click());
 
-    // File picked via input
     input.addEventListener("change", () => {
       if (input.files && input.files[0]) _handleFile(input.files[0]);
     });
 
-    // Drag & drop
     zone.addEventListener("dragover", (e) => {
       e.preventDefault();
       zone.classList.add("drag-over");
@@ -72,7 +67,6 @@ const ENCODE_PAGE = (() => {
 
   // ── HANDLE FILE SELECTION ─────────────────────────────────────
   function _handleFile(file) {
-    // Size check
     if (file.size > TOTKA.MAX_FILE_SIZE) {
       showToast(`File too large (max ${formatSize(TOTKA.MAX_FILE_SIZE)})`, "error");
       return;
@@ -86,7 +80,6 @@ const ENCODE_PAGE = (() => {
     _originalSize = file.size;
     _originalFmt  = formatSize(file.size);
 
-    // Update drop zone to show selected file
     const zone = document.getElementById("drop-zone");
     if (zone) {
       zone.innerHTML = `
@@ -100,38 +93,30 @@ const ENCODE_PAGE = (() => {
         </div>
         <input type="file" id="file-input" style="position:absolute;inset:0;opacity:0;cursor:pointer"/>
       `;
-      // Re-bind input after re-render
       document.getElementById("file-input")?.addEventListener("change", (e) => {
         if (e.target.files?.[0]) _handleFile(e.target.files[0]);
       });
     }
 
-    // Pre-fill title from filename (strip extension)
     const titleInput = document.getElementById("meta-title");
     if (titleInput && !titleInput.value) {
       titleInput.value = file.name.replace(/\.[^/.]+$/, "").slice(0, TOTKA.MAX_TITLE_LEN);
       _updateCharCount("meta-title", "title-count", TOTKA.MAX_TITLE_LEN);
     }
 
-    // Show next button
     const nextBtn = document.getElementById("btn-next");
     if (nextBtn) nextBtn.classList.remove("hidden");
   }
 
   // ── METADATA FORM ─────────────────────────────────────────────
   function _bindMetaForm() {
-    // "Next" button → go to info stage
     document.getElementById("btn-next")?.addEventListener("click", () => {
       if (!_file) { showToast("Select a file first", "warning"); return; }
       _showStage("info");
     });
-
-    // "Back" button → go back to pick
     document.getElementById("btn-back")?.addEventListener("click", () => {
       _showStage("pick");
     });
-
-    // Submit form → start encoding
     document.getElementById("meta-form")?.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (_stage !== "idle") return;
@@ -156,11 +141,10 @@ const ENCODE_PAGE = (() => {
     });
   }
 
-  // ── TAG INPUT (comma-separated, pill display) ──────────────────
+  // ── TAG INPUT ──────────────────────────────────────────────────
   function _bindTagInput() {
     const input = document.getElementById("meta-tags");
     if (!input) return;
-
     input.addEventListener("input", () => {
       const val   = input.value;
       const tags  = val.split(",").map(t => t.trim()).filter(Boolean);
@@ -170,8 +154,6 @@ const ENCODE_PAGE = (() => {
         count.style.color = tags.length > 5 ? "var(--accent-red)" : "var(--text-muted)";
       }
     });
-
-    // Enforce 5 tags max on blur
     input.addEventListener("blur", () => {
       const tags = input.value.split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
       input.value = tags.slice(0, 5).join(", ");
@@ -204,7 +186,6 @@ const ENCODE_PAGE = (() => {
 
   // ── START ENCODING ────────────────────────────────────────────
   async function _startEncode() {
-    // Validate form
     const title = document.getElementById("meta-title")?.value.trim();
     const tags  = document.getElementById("meta-tags")?.value.trim();
     const desc  = document.getElementById("meta-desc")?.value.trim() || "";
@@ -219,7 +200,6 @@ const ENCODE_PAGE = (() => {
       showToast(`Title too long (max ${TOTKA.MAX_TITLE_LEN} chars)`, "error");
       return;
     }
-
     const tagList = tags ? tags.split(",").map(t => t.trim().toLowerCase()).filter(Boolean) : [];
     if (tagList.length > 5) {
       showToast("Max 5 tags allowed", "error");
@@ -229,30 +209,38 @@ const ENCODE_PAGE = (() => {
     _stage = "encoding";
     _disableForm(true);
 
-    // Show progress
     _progress.show("Starting...", ["Read", "Compress", "Encode", "Save"]);
 
     try {
-      // Read file as Uint8Array
       _progress.update(5, "Reading file...", formatSize(_file.size));
       const buffer = await _file.arrayBuffer();
       const uint8  = new Uint8Array(buffer);
       _progress.completeStep(0);
 
-      // Choose Web Worker for large files (>10MB), main thread for small
+      const meta = {
+        fileName: _file.name,
+        mimeType: _file.type || "application/octet-stream",
+        originalSize: _originalFmt
+      };
+
       _progress.update(10, "Compressing & encoding...", "");
 
       if (_file.size > 10 * 1024 * 1024) {
-        // Large file → Web Worker
+        // Large file → Web Worker returns bare BMP body
         _worker  = TOTKA_WORKER.create();
-        _encoded = await _worker.encode(uint8, (pct, status, detail) => {
-          _progress.update(10 + Math.floor(pct * 0.7), status, detail);
+        const body = await _worker.encode(uint8, (pct, status, detail) => {
+          _progress.update(10 + Math.floor(pct * 0.65), status, detail);
         });
         _worker.terminate();
         _worker = null;
+        // Prepend header in main thread
+        const header = TOTKA_ENGINE.MAGIC +
+                       JSON.stringify({ n: meta.fileName, t: meta.mimeType, s: meta.originalSize }) +
+                       "\x00";
+        _encoded = header + body;
       } else {
-        // Small file → main thread (synchronous, simpler)
-        _encoded = TOTKA_ENGINE.encode(uint8, (pct, status, detail) => {
+        // Small file → main thread (encodeWithMeta does everything)
+        _encoded = TOTKA_ENGINE.encodeWithMeta(uint8, meta, (pct, status, detail) => {
           _progress.update(10 + Math.floor(pct * 0.7), status, detail);
         });
       }
@@ -261,7 +249,6 @@ const ENCODE_PAGE = (() => {
       _progress.completeStep(2);
       _progress.update(82, "Saving to cloud...", `${_encoded.length.toLocaleString()} chars`);
 
-      // Save post via GAS 3
       const res = await API.WRITE.savePost({
         encoded:      _encoded,
         title,
@@ -280,7 +267,6 @@ const ENCODE_PAGE = (() => {
         throw new Error(res.message || res.error);
       }
 
-      // ── SUCCESS ─────────────────────────────────────────────
       _progress.success("Saved successfully!", `Post ID: ${res.postId}`);
       _stage = "done";
       _showDoneStage(res, title, tagList);
@@ -298,7 +284,6 @@ const ENCODE_PAGE = (() => {
   function _showDoneStage(res, title, tags) {
     _showStage("done");
 
-    // Fill in result values
     const els = {
       "done-post-id":     res.postId,
       "done-title":       title,
@@ -312,15 +297,11 @@ const ENCODE_PAGE = (() => {
       if (el) el.textContent = val;
     });
 
-    // Tags
     const tagsEl = document.getElementById("done-tags");
     if (tagsEl && tags.length) {
-      tagsEl.innerHTML = tags.map(t =>
-        `<span class="card-tag">#${esc(t)}</span>`
-      ).join("");
+      tagsEl.innerHTML = tags.map(t => `<span class="card-tag">#${esc(t)}</span>`).join("");
     }
 
-    // Wire up done-stage buttons
     document.getElementById("btn-copy-id")?.addEventListener("click", () => {
       copyToClipboard(res.postId, "Post ID copied!");
     });
@@ -360,7 +341,6 @@ const ENCODE_PAGE = (() => {
   }
 
   return { init };
-
 })();
 
 document.addEventListener("DOMContentLoaded", ENCODE_PAGE.init);
